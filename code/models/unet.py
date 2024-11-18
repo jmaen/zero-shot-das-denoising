@@ -3,29 +3,73 @@ import torch.nn as nn
 
 
 class UNet(nn.Module):
-  def __init__(self, in_channels, deep_channels=[8, 16, 32, 64, 128], skip_channels=[0, 0, 0, 4, 4]):
+  def __init__(self, in_channels, deep_channels, skip_channels):
     super().__init__()
 
-    self.down1 = self._down(in_channels, 8)
-    self.down2 = self._down(8, 16)
-    self.down3 = self._down(16, 32)
-    self.down4 = self._down(32, 64)
-    self.down5 = self._down(64, 128, True)
+    assert len(deep_channels) == len(skip_channels)
 
-    self.skip4 = self._skip(32, 4)
-    self.skip5 = self._skip(64, 4)
+    self.depth = len(deep_channels)
 
-    self.up1 = self._up(16, 8, True)
-    self.up2 = self._up(32, 16)
-    self.up3 = self._up(64, 32)
-    self.up4 = self._up(128 + 4, 64)
-    self.up5 = self._up(128 + 4, 128)
+    down = [None for _ in range(self.depth)]
+    up = [None for _ in range(self.depth)]
+    skip = [None for _ in range(self.depth)]
+
+    # first down & skip layers
+    down[0] = self._down(in_channels, deep_channels[0])
+
+    if skip_channels[0] > 0:
+      skip[0] = self._skip(in_channels, skip_channels[0])
+
+    for i in range(self.depth - 1):
+      # down layers
+      ic = deep_channels[i]
+      oc = deep_channels[i + 1]
+      is_last = i == self.depth - 2
+      down[i + 1] = self._down(ic, oc, is_last)
+
+      # up layers
+      ic = deep_channels[i + 1] + skip_channels[i]
+      oc = deep_channels[i]
+      is_first = i == 0
+      up[i] = self._up(ic, oc, is_first)
+
+      # skip layers
+      if skip_channels[i + 1] > 0:
+        ic = deep_channels[i]
+        oc = skip_channels[i + 1]
+        skip[i + 1] = self._skip(ic, oc)
+
+    # last ("deepest") up layer
+    ic = deep_channels[self.depth - 1] + skip_channels[self.depth - 1]
+    oc = deep_channels[self.depth - 1]
+    up[-1] = self._up(ic, oc)
+
+    self.down = nn.ModuleList(down)
+    self.up = nn.ModuleList(up)
+    self.skip = nn.ModuleList(skip)
 
     self.out = nn.Sequential(
-      nn.Conv2d(8, 3, kernel_size=1),
+      nn.Conv2d(deep_channels[0], 3, kernel_size=1),
       nn.Sigmoid()
     )
 
+  def forward(self, x):
+    s = [None for _ in range(self.depth)]
+
+    # calculate down and skip outputs
+    for i in range(0, self.depth):
+      if self.skip[i] is not None:
+        s[i] = self.skip[i](x)
+    
+      x = self.down[i](x)
+
+    # calculate up outputs
+    for i in range(self.depth - 1, -1, -1):
+      x = self._concat(x, s[i])
+      x = self.up[i](x)
+
+    return self.out(x)
+  
   def _down(self, in_channels, out_channels, is_last=False):
     model = nn.Sequential(
       nn.Conv2d(in_channels, out_channels, kernel_size=3, stride=2, padding=1, padding_mode='reflect'),
@@ -63,21 +107,9 @@ class UNet(nn.Module):
       nn.BatchNorm2d(out_channels),
       nn.LeakyReLU(0.2),
     )
-
-  def forward(self, x):
-    x1 = self.down1(x)
-    x2 = self.down2(x1)
-    x3 = self.down3(x2)
-    x4 = self.down4(x3)
-    x5 = self.down5(x4)
-
-    s4 = self.skip4(x3)
-    s5 = self.skip5(x4)
-
-    u5 = self.up5(torch.cat([x5, s5], dim=1))
-    u4 = self.up4(torch.cat([u5, s4], dim=1))
-    u3 = self.up3(u4)
-    u2 = self.up2(u3)
-    u1 = self.up1(u2)
-
-    return self.out(u1)
+  
+  def _concat(self, x, s):
+    if s is None:
+      return x
+    
+    return torch.cat([x, s], dim=1)
