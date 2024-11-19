@@ -1,6 +1,8 @@
+import os
 import matplotlib.pyplot as plt
 from PIL import Image
 import torch
+import torchvision
 import torchvision.transforms as transforms
 import torchvision.utils as utils
 
@@ -10,6 +12,26 @@ def load_image(path):
     transform = transforms.ToTensor()
     img = transform(img)
     return img.unsqueeze(0)
+
+
+def load_images(dir):
+    images = []
+    for file in os.listdir(dir):
+        images.append(load_image(os.path.join(dir, file)))
+
+    return images
+
+
+def load_celeba(num_samples=1):
+    transform = transforms.Compose([
+        transforms.Resize((128, 128)),
+        transforms.ToTensor(),
+    ])
+
+    dataset = torchvision.datasets.CelebA(root='./data/', download=True, transform=transform)
+    data_loader = torch.utils.data.DataLoader(dataset, batch_size=num_samples, shuffle=True)
+
+    return next(iter(data_loader))[0]
 
 
 def save_image(img, path):
