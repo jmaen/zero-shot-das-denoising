@@ -14,7 +14,7 @@ class DIP:
     self.epochs = epochs
     self.lr = lr
 
-  def denoise(self, x0):
+  def denoise(self, x0, id=None, verbose=True):
     device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device('cpu')
 
     net = UNet(self.input_channels, self.deep_channels, self.skip_channels)
@@ -30,8 +30,7 @@ class DIP:
     
     net.train()
 
-    print(f'Training on {device}')
-    print('----------')
+    print(f'{f'{id}: ' if id is not None else ''}Training on {device}')
     start = time.time()
 
     losses = []
@@ -45,14 +44,15 @@ class DIP:
 
       losses.append(loss.item())
 
-      if i % 100 == 99:
+      if verbose and i % 100 == 99:
         print(f'Epoch {i + 1:4d}/{self.epochs} | Loss: {loss.item()}')
 
     duration = time.time() - start
     print('----------')
-    print(f'Finished training in {time.strftime('%H:%M:%S', time.gmtime(duration))}')
+    print(f'Finished training in {time.strftime('%H:%M:%S', time.gmtime(duration))}\n')
 
-    plt.plot(losses)
-    plt.show()
+    if verbose:
+      plt.plot(losses)
+      plt.show()
 
     return net(z)

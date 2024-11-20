@@ -39,6 +39,8 @@ def save_image(img, path):
 
 
 def get_noisy_image(img, std=0.1):
+    # TODO use full range (-1, 1)
+    # TODO use snr instead of std
     noise = torch.randn(img.size()) * std
     img = img + noise
     return torch.clamp(img, 0, 1)
