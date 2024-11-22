@@ -19,7 +19,7 @@ def load_images(dir):
     for file in os.listdir(dir):
         images.append(load_image(os.path.join(dir, file)))
 
-    return images
+    return torch.cat(images)
 
 
 def load_celeba(num_samples=1):
@@ -47,7 +47,7 @@ def get_noisy_image(img, std=0.1):
 
 
 def plot_row(images, labels=[], path=''):
-    _, axes = plt.subplots(1, len(images), figsize=(10, 10))
+    _, axes = plt.subplots(1, len(images), figsize=(5, 5))
 
     for i, img in enumerate(images):
         img = torch.squeeze(img)
