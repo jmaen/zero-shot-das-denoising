@@ -39,7 +39,6 @@ def save_image(img, path):
 
 
 def get_noisy_image(img, std=0.1):
-    # TODO use full range (-1, 1)
     # TODO use snr instead of std
     noise = torch.randn(img.size()) * std
     img = img + noise
@@ -47,7 +46,7 @@ def get_noisy_image(img, std=0.1):
 
 
 def plot_row(images, labels=[], path=''):
-    _, axes = plt.subplots(1, len(images), figsize=(5, 5))
+    _, axes = plt.subplots(1, len(images), figsize=(10, 10))
 
     for i, img in enumerate(images):
         img = torch.squeeze(img)
