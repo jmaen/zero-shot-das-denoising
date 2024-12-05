@@ -1,6 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 from PIL import Image
+import numpy as np
 import torch
 import torchvision
 import torchvision.transforms as transforms
@@ -38,8 +39,10 @@ def save_image(img, path):
     utils.save_image(img, path)
 
 
-def get_noisy_image(img, std=0.1):
-    # TODO use snr instead of std
+def get_noisy_image(img, psnr=20):
+    mse = 1 / (10 ** (psnr / 10))
+    std = np.sqrt(mse)
+
     noise = torch.randn(img.size()) * std
     img = img + noise
     return torch.clamp(img, 0, 1)
