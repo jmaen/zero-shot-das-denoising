@@ -156,6 +156,11 @@ cython_debug/
 
 .vscode
 
-build/
-celeba/
 thesis/
+build/
+experiments/
+test.ipynb
+
+# data
+celeba/
+commonvoice/
