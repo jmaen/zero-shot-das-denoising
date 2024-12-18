@@ -1,4 +1,5 @@
 import os
+import textwrap
 import matplotlib.pyplot as plt
 from PIL import Image
 import numpy as np
@@ -63,7 +64,8 @@ def plot_row(images, labels=[], path=''):
         axes[i].axis('off')
         
         if labels and i < len(labels):
-            axes[i].set_title(labels[i], fontsize=10)
+            label = "\n".join(textwrap.wrap(labels[i], 22))
+            axes[i].set_title(label, fontsize=10)
 
     if path:
         plt.savefig(path, bbox_inches='tight')

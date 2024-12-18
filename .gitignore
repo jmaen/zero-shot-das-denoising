@@ -159,6 +159,7 @@ cython_debug/
 thesis/
 build/
 experiments/
+wandb/
 test.ipynb
 
 # data

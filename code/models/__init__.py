@@ -1,2 +1,2 @@
+from .skipnet import SkipNet
 from .unet import UNet
-from .dip import DIP
