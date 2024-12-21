@@ -4,9 +4,8 @@ from typing import Dict, Any
 import torch
 import torch.nn as nn
 import torch.optim as optim
-import matplotlib.pyplot as plt
-import wandb
-from torchmetrics.image import PeakSignalNoiseRatio, StructuralSimilarityIndexMeasure
+from torchmetrics.image import PeakSignalNoiseRatio, StructuralSimilarityIndexMeasure, LearnedPerceptualImagePatchSimilarity
+from utils import Logger
 from .denoiser import Denoiser
 
 
@@ -25,10 +24,16 @@ class BaseDIP(Denoiser):
             torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
         )
 
-        self.psnr = PeakSignalNoiseRatio().to(self.device)
-        self.ssim = StructuralSimilarityIndexMeasure().to(self.device)
+        self.mse = nn.MSELoss()
 
-    def denoise(self, x_hat, x=None, id=0):
+        self.logger = Logger()
+        self.metrics = {
+            "psnr": PeakSignalNoiseRatio().to(self.device),
+            "ssim": StructuralSimilarityIndexMeasure().to(self.device),
+            "lpips": LearnedPerceptualImagePatchSimilarity().to(self.device),
+        }
+
+    def denoise(self, x_hat, x=None, options={}):
         self.net.to(self.device)
 
         optimizer = optim.Adam(self.net.parameters(), self.lr)
@@ -38,13 +43,14 @@ class BaseDIP(Denoiser):
             x = x.to(self.device)
 
         state = {
-            "id": id,
             "x_hat": x_hat,
             "x": x, 
             "x_out": None,
             "start": time.time(),
             "epoch": 0, 
-            "metrics": {}
+            "metrics": {},
+            "summary": {},
+            "options": options,
         }
 
         z = self.init_z(state)
@@ -71,53 +77,44 @@ class BaseDIP(Denoiser):
 
         return state["x_out"]
     
-    def calculate_loss(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-        raise NotImplementedError("Loss function must be implemented by subclass")
-    
-    def should_stop(self, state: Dict[str, Any]) -> bool:
-        raise NotImplementedError("Stopping function must be implemented by subclass")
-    
     def init_z(self, state: Dict[str, Any]) -> torch.Tensor:
         return torch.rand_like(state["x_hat"], device=self.device) * 0.1
     
     def update_z(self, z: torch.Tensor, state: Dict[str, Any]) -> torch.Tensor:
         return z
+    
+    def calculate_loss(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+        return self.mse(x, y)
+    
+    def should_stop(self, state: Dict[str, Any]) -> bool:
+        raise NotImplementedError("Stopping function must be implemented by subclass")
 
     def on_train_start(self, state: Dict[str, Any]):
-        print(f"Training on {self.device}")
+        state["options"]["config"].update({
+            "variant": str(self),
+            "architecture": str(self.net),
+        })
 
-        wandb.init(
-            project="zero-shot-das-denoising",
-            entity="jmaen-team",
-            name=f"{state["id"]} | {str(self)} | {str(self.net)}",
-            settings=wandb.Settings(init_timeout=120),
-            config={
-                "variant": str(self),
-                "architecture": str(self.net),
-            }
-        )
+        self.logger.init_run(state["options"]["mode"], state["options"]["config"])
 
     def on_epoch_end(self, state: Dict[str, Any]):
-        psnr = self.psnr(state["x_out"], state["x"]).item()
-        ssim = self.ssim(state["x_out"], state["x"]).item()
+        for key in state["options"]["metrics"]:
+            metric = self.metrics[key](state["x_out"], state["x"]).item()
+            state["metrics"][key] = metric
 
-        state["metrics"]["psnr"] = psnr
-        state["metrics"]["ssim"] = ssim
-
-        wandb.log(state["metrics"])
+        self.logger.log(state["metrics"])
     
     def on_train_end(self, state: Dict[str, Any]):
-        psnr = self.psnr(state["x_out"], state["x"]).item()
-        ssim = self.ssim(state["x_out"], state["x"]).item()
-
-        wandb.run.summary["out_psnr"] = psnr
-        wandb.run.summary["out_ssim"] = ssim
-        wandb.finish()
-
         duration = time.time() - state["start"]
-        print(
-            f"Finished training in {time.strftime('%H:%M:%S', time.gmtime(duration))}\n"
-        )
+        runtime = time.strftime('%H:%M:%S', time.gmtime(duration))
+        state["summary"]["runtime"] = runtime
+
+        for key in state["options"]["metrics"]:
+            metric = self.metrics[key](state["x_out"], state["x"]).item()
+            state["summary"][key] = metric
+
+        self.logger.finish(state["summary"])
+
 
 class DIP(BaseDIP):
     def __init__(self, net, input_size=3, lr=0.01, max_epochs=2400):
@@ -128,9 +125,6 @@ class DIP(BaseDIP):
 
     def __str__(self):
         return f"DIP ({self.max_epochs})"
-
-    def calculate_loss(self, x, y):
-        return self.mse(x, y)
     
     def should_stop(self, state):
         return state["epoch"] >= self.max_epochs
@@ -146,9 +140,6 @@ class DIP_MWV(BaseDIP):
 
     def __str__(self):
         return f"DIP (MWV)"
-
-    def calculate_loss(self, x, y):
-        return self.mse(x, y)
     
     def should_stop(self, state):
         if state["epoch"] >= state["epoch_opt"] + self.patience:
@@ -182,49 +173,23 @@ class DIP_MWV(BaseDIP):
         super().on_epoch_end(state)
 
     def on_train_end(self, state):
-        wandb.run.summary["stopping_point"] = state["epoch_opt"]
-
-        print(f"Early stopping point: {state["epoch_opt"]} epochs")
+        state["summary"]["stopping_point"] = state["epoch_opt"]
 
         super().on_train_end(state)
 
-        # fig, ax1 = plt.subplots(figsize=(8, 5))
-        # ax1.grid()
-
-        # ax1.plot(state["losses"], 'b-')
-        # ax1.set_xlabel('Epoch')
-        # ax1.set_ylabel('Loss', color='b')
-        # ax1.tick_params(axis='y', labelcolor='b')
-
-        # ax2 = ax1.twinx()
-        # ax2.plot(state["psnrs"], 'r-')
-        # ax2.set_ylabel('PSNR', color='r')
-        # ax2.tick_params(axis='y', labelcolor='r')
-
-        # ax3 = ax1.twinx()
-        # ax3.spines['right'].set_position(('outward', 60))
-        # ax3.plot(state["vars"], 'g-')
-        # ax3.set_ylabel('Variance', color='g')
-        # ax3.tick_params(axis='y', labelcolor='g')
-
-        # ax1.axvline(x=state["epoch_opt"], color='purple', linestyle='--')
-
-        # fig.tight_layout()
-        # plt.show()
-
-
 class DIP_TV(BaseDIP):
-    def __init__(self, net, input_size=3, lr=0.01, max_epochs=2400):
+    def __init__(self, net, input_size=3, lr=0.01, max_epochs=2400, alpha=1):
         super().__init__(net, input_size, lr)
 
         self.max_epochs = max_epochs
+        self.alpha = alpha
         self.mse = nn.MSELoss()
 
     def __str__(self):
         return f"DIP-TV ({self.max_epochs})"
 
     def calculate_loss(self, x, y):
-        return self.mse(x, y) + self._tv_norm(x)
+        return super().calculate_loss(x, y) + self.alpha*self._tv_norm(x)
     
     def should_stop(self, state):
         return state["epoch"] >= self.max_epochs
@@ -241,20 +206,19 @@ class DIP_TV(BaseDIP):
 
 
 class DDIP(BaseDIP):
-    def __init__(self, net, input_size=3, lr=0.01, max_epochs=2800):
+    # FIXME sometimes quality drops significantly for t ~ T
+
+    def __init__(self, net, input_size=3, lr=0.01, T=2400):
         super().__init__(net, input_size, lr)
 
-        self.max_epochs = max_epochs
-        self.mse = nn.MSELoss()
+        self.T = T
+        self.T_ = T - 20
 
     def __str__(self):
-        return f"DDIP ({self.max_epochs})"
-
-    def calculate_loss(self, x, y):
-        return self.mse(x, y)
+        return f"DDIP ({self.T})"
     
     def should_stop(self, state):
-        return state["epoch"] >= self.max_epochs
+        return state["epoch"] >= self.T_
     
     def init_z(self, state):
         x = state["x_hat"]
@@ -267,5 +231,22 @@ class DDIP(BaseDIP):
         return self._cos_schedule(x, y, state["epoch"])
 
     def _cos_schedule(self, x, y, t):
-        alpha = math.cos((math.pi * (self.max_epochs - t)) / (2 * (self.max_epochs + 200)))**2
-        return math.sqrt(alpha) * x + math.sqrt(1 - alpha) * y
+        alpha_bar = math.cos((math.pi * (self.T_ - t)) / (2 * (self.T)))**2
+        return math.sqrt(alpha_bar)*x + math.sqrt(1 - alpha_bar)*y
+
+
+class SelfDIP(BaseDIP):
+    def __init__(self, net, input_size=3, lr=0.01, T=2400):
+        super().__init__(net, input_size, lr)
+
+        self.T = T
+
+    def __str__(self):
+        return f"RDIP ({self.T})"
+    
+    def should_stop(self, state):
+        return state["epoch"] >= self.T
+
+    def update_z(self, z, state):
+        return state["x_out"]
+

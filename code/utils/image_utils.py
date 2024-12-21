@@ -16,10 +16,15 @@ def load_image(path):
     return img.unsqueeze(0)
 
 
-def load_images(dir):
+def load_images(dir, transform=None):
     images = []
     for file in os.listdir(dir):
-        images.append(load_image(os.path.join(dir, file)))
+        image = load_image(os.path.join(dir, file))
+
+        if transform is not None:
+            image = transform(image)
+
+        images.append(image)
 
     return torch.cat(images)
 
@@ -50,7 +55,8 @@ def get_noisy_image(img, psnr=20):
 
 
 def plot_row(images, labels=[], path=''):
-    _, axes = plt.subplots(1, len(images), figsize=(10, 10))
+    cols = len(images)
+    _, axes = plt.subplots(1, cols, figsize=(cols * 4, 8))
 
     for i, img in enumerate(images):
         img = torch.squeeze(img)
