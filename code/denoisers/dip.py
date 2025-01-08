@@ -268,10 +268,12 @@ class DDIP_P(DDIP):
         super().__init__(net)
 
     def __str__(self):
-        return f"DDIP "
+        return f"DDIP Prog"
 
     def on_epoch_end(self, state):
-        self.net.update_skip_weight(state["epoch"] / 2400)
+        self.net.update_skip_weights(state["epoch"] / self.T_)
+
+        state["metrics"]["skip_weights"] = self.net.skip_weights
 
         return super().on_epoch_end(state)
     
@@ -284,6 +286,6 @@ class DIP_P(DIP):
         return f"DIP Prog"
     
     def on_epoch_end(self, state):
-        self.net.update_skip_weight(state["epoch"] / 2400)
+        self.net.update_skip_weights(state["epoch"] / self.max_epochs)
 
         return super().on_epoch_end(state)

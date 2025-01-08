@@ -3,8 +3,10 @@ import torch.nn as nn
 
 
 class ProgNet(nn.Module):
-    def __init__(self, in_ch=3, out_ch=3, deep_ch=[8, 16, 32, 64, 128], skip_ch=4):
+    def __init__(self, in_ch=3, out_ch=3, deep_ch=[8, 16, 32, 64, 128], skip_ch=4, skip_schedules=None, label=""):
         super().__init__()
+
+        self.label = label
 
         down_ch = [in_ch] + deep_ch[:-1]
         up_ch = deep_ch
@@ -18,16 +20,17 @@ class ProgNet(nn.Module):
             nn.Sigmoid(),
         )
 
-        self.skip_weight = 0
+        self.skip_weights = [0 for _ in self.skips]
+        self.skip_schedules = skip_schedules or [lambda x: x for _ in self.skips]
 
     def __str__(self):
-        return "ProgNet"
+        return f"ProgNet ({self.label})"
 
     def forward(self, x):
         hist = []
         for i, (down, skip) in enumerate(zip(self.downs, self.skips)):
             x = down(x)
-            hist.append(self.skip_weight * skip(x))
+            hist.append(self.skip_weights[i] * skip(x))
 
         x = self.mid(x)
 
@@ -37,8 +40,8 @@ class ProgNet(nn.Module):
 
         return self.out(x)
 
-    def update_skip_weight(self, weight):
-        self.skip_weight = weight
+    def update_skip_weights(self, step):
+        self.skip_weights = [schedule(step) for schedule in self.skip_schedules]
     
 
 class Block(nn.Module):

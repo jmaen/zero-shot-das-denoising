@@ -1,9 +1,11 @@
 from typing import Any, Dict
 import math
+import numpy as np
 import matplotlib.pyplot as plt
 import wandb
 
 
+# TODO: add method to plot line / marker at specific step (e.g. stopping point, skip fadein, ...)
 class Logger():
     def __init__(self):
         self.colors = [
@@ -48,7 +50,10 @@ class Logger():
             if key in self.data:
                 self.data[key].append(value)
             else:
-                self.data[key] = [math.nan for _ in range(self.step)]
+                if type(value) is list:
+                    self.data[key] = [[math.nan for _ in value] for _ in range(self.step)]
+                else:
+                    self.data[key] = [math.nan for _ in range(self.step)]
                 self.data[key].append(value)
 
         self.step += 1
@@ -71,7 +76,12 @@ class Logger():
         for ax, (key, y_values), color in zip(axes, self.data.items(), self.colors):
             x_values = list(range(len(y_values)))
 
-            ax.plot(x_values, y_values, color=color)
+            if type(y_values[0]) is list:
+                y_values = [list(row) for row in zip(*y_values)]
+                for y in y_values:
+                    ax.plot(x_values, y, color=color)
+            else:
+                ax.plot(x_values, y_values, color=color)
             ax.set_title(key, fontsize=10)
 
             ax.set_xlabel("Step") 
