@@ -33,6 +33,9 @@ class BaseDIP(Denoiser):
             "lpips": LearnedPerceptualImagePatchSimilarity().to(self.device),
         }
 
+    def key(self):
+        return f"{str(self)} | {str(self.net)}"
+
     def denoise(self, x_hat, x=None, options={}):
         self.net.to(self.device)
 
@@ -206,8 +209,6 @@ class DIP_TV(BaseDIP):
 
 
 class DDIP(BaseDIP):
-    # FIXME sometimes quality drops significantly for t ~ T
-
     def __init__(self, net, input_size=3, lr=0.01, T=2400):
         super().__init__(net, input_size, lr)
 
@@ -227,12 +228,15 @@ class DDIP(BaseDIP):
 
     def update_z(self, z, state):
         x = state["x_out"]
-        y = torch.randn_like(state["x_out"], device=self.device)
+        y = torch.randn_like(x, device=self.device)
         return self._cos_schedule(x, y, state["epoch"])
 
     def _cos_schedule(self, x, y, t):
         alpha_bar = math.cos((math.pi * (self.T_ - t)) / (2 * (self.T)))**2
         return math.sqrt(alpha_bar)*x + math.sqrt(1 - alpha_bar)*y
+
+
+# EXPERIMENTS
 
 
 class SelfDIP(BaseDIP):
@@ -249,4 +253,37 @@ class SelfDIP(BaseDIP):
 
     def update_z(self, z, state):
         return state["x_out"]
+    
 
+class DDIP_MWV(DIP_MWV, DDIP):
+    def __init__(self, net):
+        super().__init__(net)
+
+    def __str__(self):
+        return "DDIP (MWV)"
+
+
+class DDIP_P(DDIP):
+    def __init__(self, net):
+        super().__init__(net)
+
+    def __str__(self):
+        return f"DDIP "
+
+    def on_epoch_end(self, state):
+        self.net.update_skip_weight(state["epoch"] / 2400)
+
+        return super().on_epoch_end(state)
+    
+
+class DIP_P(DIP):
+    def __init__(self, net):
+        super().__init__(net)
+
+    def __str__(self):
+        return f"DIP Prog"
+    
+    def on_epoch_end(self, state):
+        self.net.update_skip_weight(state["epoch"] / 2400)
+
+        return super().on_epoch_end(state)

@@ -3,7 +3,7 @@ from .denoiser import Denoiser
 
 
 class GaussianBlur(Denoiser):
-  def __str__(self):
+  def key(self):
     return "Gaussian Blur"
   
   def denoise(self, x_hat, x=None, options={}):

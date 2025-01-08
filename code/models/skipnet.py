@@ -3,7 +3,7 @@ import torch.nn as nn
 
 
 class SkipNet(nn.Module):
-  def __init__(self, in_channels, deep_channels, skip_channels, out_channels=3):
+  def __init__(self, in_channels, deep_channels, skip_channels, out_channels=3, label=""):
     super().__init__()
 
     assert len(deep_channels) == len(skip_channels)
@@ -11,6 +11,7 @@ class SkipNet(nn.Module):
     self.deep_channels = deep_channels
     self.skip_channels = skip_channels
     self.depth = len(deep_channels)
+    self.label = label or f"{str(self.deep_channels)}, {str(self.skip_channels)}"
     
     down = [None for _ in range(self.depth)]
     up = [None for _ in range(self.depth)]
@@ -56,7 +57,7 @@ class SkipNet(nn.Module):
     )
 
   def __str__(self):
-    return f"SkipNet ({str(self.deep_channels)}, {str(self.skip_channels)})"
+    return f"SkipNet ({self.label})"
 
   def forward(self, x):
     s = [None for _ in range(self.depth)]
