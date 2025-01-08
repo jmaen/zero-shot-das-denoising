@@ -1,8 +1,11 @@
 from typing import Any, Dict
 import math
 import numpy as np
+import torch
 import matplotlib.pyplot as plt
+import cv2
 import wandb
+from IPython.display import Video, HTML, display
 
 
 # TODO: add method to plot line / marker at specific step (e.g. stopping point, skip fadein, ...)
@@ -23,8 +26,8 @@ class Logger():
     def init_run(self, mode: str, options: Dict[str, Any]):
         self.mode = mode
 
-        name = f"{options["id"]} | {options["variant"]} | {options["architecture"]}"
-        print(f"Running: {name}")
+        self.name = f"{options["id"]} - {options["variant"]} - {options["architecture"]}"
+        print(f"Running: {self.name}")
 
         if self.mode == "local":
             self.data = {}
@@ -34,15 +37,18 @@ class Logger():
                 project=options.pop("project"),
                 entity=options.pop("entity"),
                 group=options.pop("group"),
-                name=name,
+                name=self.name,
                 config=options,
-                settings=wandb.Settings(init_timeout=120),
+                # settings=wandb.Settings(init_timeout=120),
             )
 
     def log(self, data: Dict[str, Any]):
         if self.mode == "local":
             self.log_local(data)
         elif self.mode == "wandb":
+            for key, value in data.items():
+                if type(value) is list:
+                    data[key] = value[0]
             wandb.log(data)
 
     def log_local(self, data: Dict[str, Any]):
@@ -60,20 +66,27 @@ class Logger():
 
     def finish(self, summary: Dict[str, Any]):
         if self.mode == "local":
-            self.plot()
+            self.display()
             print(f"Summary: {summary}\n")
         elif self.mode == "wandb":
             wandb.run.summary.update(summary)
             wandb.finish()
 
-    def plot(self):
-        num_metrics = len(self.data)
+    def display(self):
+        metrics = {key: value for key, value in self.data.items() if isinstance(value[0], (float, list))}
+        self.plot_metrics(metrics)
+
+        images = {key: value for key, value in self.data.items() if isinstance(value[0], torch.Tensor)}
+        self.generate_videos(images)
+
+    def plot_metrics(self, metrics):
+        num_metrics = len(metrics)
         rows = math.ceil(num_metrics / 3)
 
         _, axes = plt.subplots(rows, 3, figsize=(20, rows * 4))
         axes = axes.flatten()
 
-        for ax, (key, y_values), color in zip(axes, self.data.items(), self.colors):
+        for ax, (key, y_values), color in zip(axes, metrics.items(), self.colors):
             x_values = list(range(len(y_values)))
 
             if type(y_values[0]) is list:
@@ -88,7 +101,21 @@ class Logger():
             ax.set_ylabel("Value") 
 
         for i in range(num_metrics, len(axes)):
-            axes[i].axis('off')
+            axes[i].axis("off")
 
         plt.tight_layout()
         plt.show()
+
+    def generate_videos(self, images):
+        for key, values in images.items():
+            _, height, width = values[0].squeeze().shape
+
+            fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+            video_writer = cv2.VideoWriter(f"output/videos/{self.name}_{key}.mp4", fourcc, 120, (width, height))
+
+            for value in values:
+                value = value.squeeze()
+                frame = (value.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
+                video_writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
+
+            video_writer.release()

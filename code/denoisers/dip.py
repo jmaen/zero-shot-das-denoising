@@ -70,6 +70,7 @@ class BaseDIP(Denoiser):
             optimizer.step()
 
             state["epoch"] += 1
+            state["z"] = z.detach()
             state["x_out"] = x_out.detach()
             state["metrics"]["loss"] = loss.item()
             self.on_epoch_end(state)
@@ -105,7 +106,11 @@ class BaseDIP(Denoiser):
             metric = self.metrics[key](state["x_out"], state["x"]).item()
             state["metrics"][key] = metric
 
-        self.logger.log(state["metrics"])
+        data = state["metrics"].copy()
+        if state["options"]["save_images"]:
+            data.update({"in": state["z"], "out": state["x_out"]})
+
+        self.logger.log(data)
     
     def on_train_end(self, state: Dict[str, Any]):
         duration = time.time() - state["start"]
@@ -289,3 +294,21 @@ class DIP_P(DIP):
         self.net.update_skip_weights(state["epoch"] / self.max_epochs)
 
         return super().on_epoch_end(state)
+
+class DDIP_Const(DDIP):
+    def __init__(self, net):
+        super().__init__(net)
+
+    def __str__(self):
+        return f"DDIP Const"
+    
+    def init_z(self, state):
+        x = state["x_hat"]
+        y = torch.randn_like(state["x_hat"], device=self.device)
+        state["noise"] = y
+        return self._cos_schedule(x, y, 0)
+
+    def update_z(self, z, state):
+        x = state["x_out"]
+        y = state["noise"]
+        return self._cos_schedule(x, y, state["epoch"])
