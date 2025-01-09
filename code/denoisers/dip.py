@@ -79,6 +79,8 @@ class BaseDIP(Denoiser):
 
         self.on_train_end(state)
 
+        self.net.reset_parameters()
+
         return state["x_out"]
     
     def init_z(self, state: Dict[str, Any]) -> torch.Tensor:
@@ -285,14 +287,14 @@ class DDIP_MWV(DIP_MWV, DDIP):
 
 
 class DDIP_P(DDIP):
-    def __init__(self, net):
-        super().__init__(net)
+    def __init__(self, net, schedule="cos"):
+        super().__init__(net, schedule=schedule)
 
     def __str__(self):
-        return f"DDIP Prog"
+        return f"DDIP Prog ({self.schedule}, {self.T})"
 
     def on_epoch_end(self, state):
-        self.net.update_skip_weights(state["epoch"] / self.T_)
+        self.net.update_skip_weights(state["epoch"] / self.T)
 
         state["metrics"]["skip_weights"] = self.net.skip_weights
 
@@ -316,7 +318,7 @@ class DDIP_Const(DDIP):
         super().__init__(net, schedule=schedule)
 
     def __str__(self):
-        return f"DDIP Const"
+        return f"DDIP Const ({self.schedule}, {self.T})"
     
     def init_z(self, state):
         x = state["x_hat"]

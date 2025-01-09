@@ -11,10 +11,10 @@ class ProgNet(nn.Module):
         down_ch = [in_ch] + deep_ch[:-1]
         up_ch = deep_ch
 
-        self.downs = nn.ModuleList([Down(down_ch[i], down_ch[i+1]) for i in range(len(down_ch) - 1)])
-        self.mid = Mid(down_ch[-1], up_ch[-1])
-        self.ups = nn.ModuleList([Up(up_ch[i] + skip_ch, up_ch[i-1]) for i in range(len(up_ch) - 1, 0, -1)])
-        self.skips = nn.ModuleList([Skip(down_ch[i], skip_ch) for i in range(1, len(down_ch))])
+        self.downs = nn.ModuleList([self._down(down_ch[i], down_ch[i+1]) for i in range(len(down_ch) - 1)])
+        self.mid = self._mid(down_ch[-1], up_ch[-1])
+        self.ups = nn.ModuleList([self._up(up_ch[i] + skip_ch, up_ch[i-1]) for i in range(len(up_ch) - 1, 0, -1)])
+        self.skips = nn.ModuleList([self._skip(down_ch[i], skip_ch) for i in range(1, len(down_ch))])
         self.out = nn.Sequential(
             nn.Conv2d(up_ch[0], out_ch, kernel_size=1),
             nn.Sigmoid(),
@@ -42,68 +42,43 @@ class ProgNet(nn.Module):
 
     def update_skip_weights(self, step):
         self.skip_weights = [schedule(step) for schedule in self.skip_schedules]
-    
 
-class Block(nn.Module):
-    def __init__(self, in_ch, out_ch, kernel_size=3, stride=1, padding=1):
-        super().__init__()
+    def reset_parameters(self, module=None, top_level=True):
+        if module is None and top_level:
+            for child in self.children():
+                self.reset_parameters(child, top_level=False)
+        elif isinstance(module, nn.ModuleList) or isinstance(module, nn.Sequential):
+            for child in module:
+                self.reset_parameters(child, top_level=False)
+        elif hasattr(module, 'reset_parameters'):
+            module.reset_parameters()  
 
-        self.block = nn.Sequential(
+    def _block(self, in_ch, out_ch, kernel_size=3, stride=1, padding=1):
+        return nn.Sequential(
             nn.Conv2d(in_ch, out_ch, kernel_size=kernel_size, stride=stride, padding=padding, padding_mode='reflect'),
             nn.BatchNorm2d(out_ch),
             nn.LeakyReLU(0.2),
         )
 
-    def forward(self, x):
-        return self.block(x)
-
-
-class Down(nn.Module):
-    def __init__(self, in_ch, out_ch):
-        super().__init__()
-
-        self.block = nn.Sequential(
-            Block(in_ch, out_ch, stride=2),
-            Block(out_ch, out_ch),
+    def _down(self, in_ch, out_ch):
+        return nn.Sequential(
+            self._block(in_ch, out_ch, stride=2),
+            self._block(out_ch, out_ch),
         )
 
-    def forward(self, x):
-        return self.block(x)
+    def _mid(self, in_ch, out_ch):
+        return nn.Sequential(
+            self._block(in_ch, out_ch),
+            self._block(out_ch, out_ch),
+        )
     
-
-class Mid(nn.Module):
-    def __init__(self, in_ch, out_ch):
-        super().__init__()
-
-        self.block = nn.Sequential(
-            Block(in_ch, out_ch),
-            Block(out_ch, out_ch),
-        )
-
-    def forward(self, x):
-        return self.block(x)
-
-
-class Up(nn.Module):
-    def __init__(self, in_ch, out_ch):
-        super().__init__()
-
-        self.block = nn.Sequential(
+    def _up(self, in_ch, out_ch):
+        return nn.Sequential(
             nn.BatchNorm2d(in_ch),
-            Block(in_ch, out_ch),
-            Block(out_ch, out_ch, kernel_size=1, padding=0),
+            self._block(in_ch, out_ch),
+            self._block(out_ch, out_ch, kernel_size=1, padding=0),
             nn.Upsample(scale_factor=2, mode='bilinear'),
-        )
+        ) 
 
-    def forward(self, x):
-        return self.block(x)
-    
-
-class Skip(nn.Module):
-    def __init__(self, in_ch, out_ch):
-        super().__init__()
-
-        self.block = Block(in_ch, out_ch, kernel_size=1, padding=0)
-
-    def forward(self, x):
-        return self.block(x)
+    def _skip(self, in_ch, out_ch):
+        return self._block(in_ch, out_ch, kernel_size=1, padding=0)

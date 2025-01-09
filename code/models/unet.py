@@ -3,6 +3,7 @@ import torch.nn as nn
 
 # https://arxiv.org/abs/1505.04597
 
+# TODO: add weight reset
 class ConvBlock(nn.Module):
     
     def __init__(self, in_ch, out_ch, h_ch=None):
