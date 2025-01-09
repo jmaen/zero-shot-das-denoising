@@ -108,7 +108,7 @@ class BaseDIP(Denoiser):
 
         data = state["metrics"].copy()
         if state["options"]["save_images"]:
-            data.update({"in": state["z"], "out": state["x_out"]})
+            data.update({"input & output": [state["z"], state["x_out"]]})
 
         self.logger.log(data)
     

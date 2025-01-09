@@ -39,7 +39,7 @@ class Logger():
                 group=options.pop("group"),
                 name=self.name,
                 config=options,
-                # settings=wandb.Settings(init_timeout=120),
+                settings=wandb.Settings(init_timeout=120),
             )
 
     def log(self, data: Dict[str, Any]):
@@ -57,29 +57,31 @@ class Logger():
                 self.data[key].append(value)
             else:
                 if type(value) is list:
-                    self.data[key] = [[math.nan for _ in value] for _ in range(self.step)]
+                    self.data[key] = [[None for _ in value] for _ in range(self.step)]
                 else:
-                    self.data[key] = [math.nan for _ in range(self.step)]
+                    self.data[key] = [None for _ in range(self.step)]
                 self.data[key].append(value)
 
         self.step += 1
 
     def finish(self, summary: Dict[str, Any]):
         if self.mode == "local":
-            self.display()
             print(f"Summary: {summary}\n")
+            self.display()
         elif self.mode == "wandb":
             wandb.run.summary.update(summary)
             wandb.finish()
 
+    # TODO: cleanup
+
     def display(self):
-        metrics = {key: value for key, value in self.data.items() if isinstance(value[0], (float, list))}
-        self.plot_metrics(metrics)
+        metrics = {key: value for key, value in self.data.items() if isinstance(value[0], float) or (isinstance(value[0], list) and isinstance(value[0][0], float))}
+        self.visualize_metrics(metrics)
 
-        images = {key: value for key, value in self.data.items() if isinstance(value[0], torch.Tensor)}
-        self.generate_videos(images)
+        tensors = {key: value for key, value in self.data.items() if isinstance(value[0], torch.Tensor) or (isinstance(value[0], list) and isinstance(value[0][0], torch.Tensor))}
+        self.visualize_tensors(tensors)
 
-    def plot_metrics(self, metrics):
+    def visualize_metrics(self, metrics):
         num_metrics = len(metrics)
         rows = math.ceil(num_metrics / 3)
 
@@ -90,10 +92,11 @@ class Logger():
             x_values = list(range(len(y_values)))
 
             if type(y_values[0]) is list:
-                y_values = [list(row) for row in zip(*y_values)]
+                y_values = [[math.nan if elem is None else elem for elem in row] for row in zip(*y_values)]
                 for y in y_values:
                     ax.plot(x_values, y, color=color)
             else:
+                y_values = [math.nan if elem is None else elem for elem in y_values]
                 ax.plot(x_values, y_values, color=color)
             ax.set_title(key, fontsize=10)
 
@@ -106,16 +109,58 @@ class Logger():
         plt.tight_layout()
         plt.show()
 
-    def generate_videos(self, images):
-        for key, values in images.items():
-            _, height, width = values[0].squeeze().shape
+    def visualize_tensors(self, tensors):
+        for key, values in tensors.items():
+            frames = [self.tensor_to_frame(value, i) for i, value in enumerate(values)]
 
+            height, width, _ = frames[0].shape
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-            video_writer = cv2.VideoWriter(f"output/videos/{self.name}_{key}.mp4", fourcc, 120, (width, height))
+            video_writer = cv2.VideoWriter(f"output/videos/{self.name}_{key}.mp4", fourcc, 60, (width, height))
 
-            for value in values:
-                value = value.squeeze()
-                frame = (value.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
+            for frame in frames:
                 video_writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
 
             video_writer.release()
+
+    def tensor_to_frame(self, tensor, step):
+        if isinstance(tensor, list):
+            frame = self.concatenate_tensors(tensor)
+        else:
+            tensor = tensor.squeeze()
+            frame = (tensor.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
+
+        height, width, _ = frame.shape
+        text_height = 30
+        new_frame = np.full((height + text_height, width, 3), 255, dtype=np.uint8)
+        new_frame[text_height:, :, :] = frame
+        
+        text = f"Step {step}"
+        text_size = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 1)[0]
+        text_x = (width - text_size[0]) // 2
+        text_y = (text_height + text_size[1]) // 2
+        
+        cv2.putText(new_frame, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 0), 1, cv2.LINE_AA)
+
+        return new_frame
+    
+    def concatenate_tensors(self, tensors, target_height=256, separator_width=10):
+        resized_frames = []
+        for tensor in tensors:
+            tensor = tensor.squeeze()
+            frame = (tensor.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
+            resized_frame = self.resize_frame(frame, target_height)
+            resized_frames.append(resized_frame)
+        
+        separator = np.full((target_height, separator_width, 3), 255, dtype=np.uint8)
+        
+        concatenated_frame = resized_frames[0]
+        for frame in resized_frames[1:]:
+            concatenated_frame = np.hstack((concatenated_frame, separator, frame))
+        
+        return concatenated_frame
+
+    def resize_frame(self, frame, target_height):
+        h, w, _ = frame.shape
+        scale = target_height / h
+        new_width = int(w * scale)
+        return cv2.resize(frame, (new_width, target_height))
