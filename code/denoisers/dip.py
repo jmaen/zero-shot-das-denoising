@@ -214,17 +214,18 @@ class DIP_TV(BaseDIP):
 
 
 class DDIP(BaseDIP):
-    def __init__(self, net, input_size=3, lr=0.01, T=2400):
+    def __init__(self, net, input_size=3, lr=0.01, T=2400, schedule="cos"):
         super().__init__(net, input_size, lr)
 
         self.T = T
-        self.T_ = T - 20
+        # self.T_ = T - 20
+        self.schedule = schedule
 
     def __str__(self):
-        return f"DDIP ({self.T})"
+        return f"DDIP ({self.schedule}, {self.T})"
     
     def should_stop(self, state):
-        return state["epoch"] >= self.T_
+        return state["epoch"] >= self.T
     
     def init_z(self, state):
         x = state["x_hat"]
@@ -234,11 +235,26 @@ class DDIP(BaseDIP):
     def update_z(self, z, state):
         x = state["x_out"]
         y = torch.randn_like(x, device=self.device)
-        return self._cos_schedule(x, y, state["epoch"])
+        
+        if self.schedule == "old":
+            z = self._old_schedule(x, y, state["epoch"])
+        elif self.schedule == "cos":
+            z = self._cos_schedule(x, y, state["epoch"])
+        elif self.schedule == "linear":
+            z = self._linear_schedule(x, y, state["epoch"])
 
-    def _cos_schedule(self, x, y, t):
-        alpha_bar = math.cos((math.pi * (self.T_ - t)) / (2 * (self.T)))**2
+        return z
+
+    def _old_schedule(self, x, y, t):
+        alpha_bar = math.cos((math.pi * (self.T - t)) / (2 * (self.T)))**2
         return math.sqrt(alpha_bar)*x + math.sqrt(1 - alpha_bar)*y
+    
+    def _cos_schedule(self, x, y, t):
+        alpha_bar = math.cos((math.pi * (self.T - t)) / (2 * (self.T)))**2
+        return alpha_bar*x + (1 - alpha_bar)*y
+    
+    def _linear_schedule(self, x, y, t):
+        return (t/self.T)*x + (1 - t/self.T)*y
 
 
 # EXPERIMENTS
@@ -296,8 +312,8 @@ class DIP_P(DIP):
         return super().on_epoch_end(state)
 
 class DDIP_Const(DDIP):
-    def __init__(self, net):
-        super().__init__(net)
+    def __init__(self, net, schedule="cos"):
+        super().__init__(net, schedule=schedule)
 
     def __str__(self):
         return f"DDIP Const"
