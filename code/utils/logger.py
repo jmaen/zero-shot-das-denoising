@@ -26,7 +26,7 @@ class Logger():
     def init_run(self, mode: str, options: Dict[str, Any]):
         self.mode = mode
 
-        self.name = f"{options["id"]} - {options["variant"]} - {options["architecture"]}"
+        self.name = f"{options["data_id"]} - {options["variant"]} - {options["architecture"]}"
         print(f"Running: {self.name}")
 
         if self.mode == "local":
@@ -75,7 +75,7 @@ class Logger():
     # TODO: cleanup
 
     def display(self):
-        metrics = {key: value for key, value in self.data.items() if isinstance(value[0], float) or (isinstance(value[0], list) and isinstance(value[0][0], float))}
+        metrics = {key: value for key, value in self.data.items() if isinstance(value[0], (int, float)) or (isinstance(value[0], list) and isinstance(value[0][0], (int, float)))}
         self.visualize_metrics(metrics)
 
         tensors = {key: value for key, value in self.data.items() if isinstance(value[0], torch.Tensor) or (isinstance(value[0], list) and isinstance(value[0][0], torch.Tensor))}
