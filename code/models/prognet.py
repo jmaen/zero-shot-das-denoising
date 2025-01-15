@@ -20,8 +20,8 @@ class ProgNet(nn.Module):
             nn.Sigmoid(),
         )
 
-        self.skip_weights = [0 for _ in self.skips]
         self.skip_schedules = skip_schedules or [lambda x: x for _ in self.skips]
+        self.update_skip_weights(0)
 
     def __str__(self):
         return f"ProgNet ({self.label})"
@@ -43,13 +43,13 @@ class ProgNet(nn.Module):
     def update_skip_weights(self, step):
         self.skip_weights = [schedule(step) for schedule in self.skip_schedules]
 
-    def reset_parameters(self, module=None, top_level=True):
-        if module is None and top_level:
+    def reset_parameters(self, module=None):
+        if module is None:
             for child in self.children():
-                self.reset_parameters(child, top_level=False)
+                self.reset_parameters(child)
         elif isinstance(module, nn.ModuleList) or isinstance(module, nn.Sequential):
             for child in module:
-                self.reset_parameters(child, top_level=False)
+                self.reset_parameters(child)
         elif hasattr(module, 'reset_parameters'):
             module.reset_parameters()  
 

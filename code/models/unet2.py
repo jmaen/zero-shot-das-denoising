@@ -38,7 +38,7 @@ class Up(nn.Module):
     
     def __init__(self, in_ch, out_ch, factor=2, bilinear=True):
         super().__init__()
-
+        
         self.upsample = nn.ConvTranspose2d(in_ch, out_ch, kernel_size=factor, stride=factor)
         if bilinear:
             self.upsample = nn.Sequential(
@@ -48,26 +48,30 @@ class Up(nn.Module):
                 nn.ReLU(),
             )
     
-        self.convs = ConvBlock(in_ch, out_ch)
+        self.convs = ConvBlock(out_ch + 4, out_ch)
         
     def forward(self, x, h):
         x = self.upsample(x)
         x = torch.cat([x, h], dim=1)
         x = self.convs(x)
         return x
-        
-class Mid(nn.Module):
     
+
+class Skip(nn.Module):
+
     def __init__(self, in_ch, out_ch):
         super().__init__()
-
-        self.convs = ConvBlock(in_ch, out_ch)
+        self.convs = nn.Sequential(
+            nn.Conv2d(in_ch, out_ch, kernel_size=1),
+            nn.BatchNorm2d(out_ch),
+            nn.ReLU(),
+        )
         
     def forward(self, x):
         x = self.convs(x)
         return x
         
-class UNet(nn.Module):
+class UNet2(nn.Module):
         
     
     def __init__(self, in_ch=3, out_ch=3, hidden_ch=64, n_layers=4, factor=2, bilinear=True):
@@ -77,7 +81,8 @@ class UNet(nn.Module):
         up_dims = [hidden_ch*2**i for i in range(n_layers,-1,-1)]
 
         self.downs = nn.ModuleList([Down(down_dims[i], down_dims[i+1], factor=factor) for i in range(len(down_dims) - 1)])
-        self.mid = Mid(down_dims[-1], down_dims[-1]*2)
+        self.skips = nn.ModuleList([Skip(down_dims[i], 4) for i in range(1, len(down_dims))])
+        self.mid = ConvBlock(down_dims[-1], down_dims[-1]*2)
         self.ups = nn.ModuleList([Up(up_dims[i], up_dims[i+1], factor=factor, bilinear=bilinear) for i in range(len(up_dims) - 1)])
         
         self.outconv = nn.Sequential(
@@ -86,14 +91,14 @@ class UNet(nn.Module):
         )
 
     def __str__(self):
-        return "UNet"
+        return "UNet2"
         
     def forward(self, x):
         
         hist = []
-        for down in self.downs:
+        for down, skip in zip(self.downs, self.skips):
             x, h = down(x)
-            hist.append(h)
+            hist.append(skip(h))
         
         x = self.mid(x)
         
@@ -104,7 +109,7 @@ class UNet(nn.Module):
         x = self.outconv(x)
         
         return x
-
+    
     def reset_parameters(self, module=None, top_level=True):
         if module is None:
             if top_level:

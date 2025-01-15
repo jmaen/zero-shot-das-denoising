@@ -62,18 +62,9 @@ class BaseDIP(Denoiser):
 
         self.on_train_start(state)
         while not self.should_stop(state):
-            optimizer.zero_grad()
-
-            x_out = self.net(z)
-            loss = self.calculate_loss(x_out, x_hat)
-            loss.backward()
-            optimizer.step()
-
-            state["epoch"] += 1
             state["z"] = z.detach()
-            state["x_out"] = x_out.detach()
-            state["metrics"]["loss"] = loss.item()
-            self.on_epoch_end(state)
+
+            self.optimize(z, x_hat, optimizer, state)
 
             z = self.update_z(z, state)
 
@@ -83,13 +74,25 @@ class BaseDIP(Denoiser):
 
         return state["x_out"]
     
+    def optimize(self, input: torch.Tensor, target: torch.Tensor, optimizer: optim.Optimizer, state: Dict[str, Any]):
+        optimizer.zero_grad()
+        output = self.net(input)
+        loss = self.calculate_loss(output, target, state)
+        loss.backward()
+        optimizer.step()
+
+        state["epoch"] += 1
+        state["x_out"] = output.detach()
+        state["metrics"]["loss"] = loss.item()
+        self.on_epoch_end(state)
+    
     def init_z(self, state: Dict[str, Any]) -> torch.Tensor:
         return torch.rand_like(state["x_hat"], device=self.device) * 0.1
     
     def update_z(self, z: torch.Tensor, state: Dict[str, Any]) -> torch.Tensor:
         return z
     
-    def calculate_loss(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def calculate_loss(self, x: torch.Tensor, y: torch.Tensor, state: Dict[str, Any] = None) -> torch.Tensor:
         return self.mse(x, y)
     
     def should_stop(self, state: Dict[str, Any]) -> bool:
@@ -141,15 +144,24 @@ class DIP(BaseDIP):
     
 
 class DIP_MWV(BaseDIP):
-    def __init__(self, net, input_size=3, lr=0.01, window_size=100, patience=1000):
+    def __init__(self, net, input_size=3, lr=0.01, window_size=100, patience=1000, z_init="gaussian"):
         super().__init__(net, input_size, lr)
          
         self.window_size = window_size
         self.patience = patience
+        self.z_init = z_init
         self.mse = nn.MSELoss()
 
     def __str__(self):
-        return f"DIP (MWV)"
+        return f"DIP MVW ({self.z_init})"
+    
+    def init_z(self, state: Dict[str, Any]) -> torch.Tensor:
+        if self.z_init == "uniform":
+            z = torch.rand_like(state["x_hat"], device=self.device) * 0.1
+        elif self.z_init == "gaussian":
+            z = torch.randn_like(state["x_hat"], device=self.device)
+
+        return z
     
     def should_stop(self, state):
         if state["epoch"] >= state["epoch_opt"] + self.patience:
@@ -187,6 +199,52 @@ class DIP_MWV(BaseDIP):
 
         super().on_train_end(state)
 
+
+class DDIP(BaseDIP):
+    def __init__(self, net, input_size=3, lr=0.01, T=2400, schedule="cos", cos_offset=0):
+        super().__init__(net, input_size, lr)
+
+        self.T = T
+        self.schedule = schedule
+        self.cos_offset = cos_offset
+
+    def __str__(self):
+        return f"DDIP ({self.schedule}, {self.cos_offset}, {self.T})"
+    
+    def should_stop(self, state):
+        return state["epoch"] >= self.T
+    
+    def init_z(self, state):
+        x = state["x_hat"]
+        y = torch.randn_like(state["x_hat"], device=self.device)
+        return self._cos_schedule(x, y, 0)
+
+    def update_z(self, z, state):
+        x = state["x_out"]
+        y = torch.randn_like(x, device=self.device)
+        
+        if self.schedule == "old":
+            z = self._old_schedule(x, y, state["epoch"])
+        elif self.schedule == "cos":
+            z = self._cos_schedule(x, y, state["epoch"], self.cos_offset)
+        elif self.schedule == "linear":
+            z = self._linear_schedule(x, y, state["epoch"])
+
+        return z
+
+    def _old_schedule(self, x, y, t):
+        alpha_bar = math.cos((math.pi * (self.T - t)) / (2 * (self.T)))**2
+        return math.sqrt(alpha_bar)*x + math.sqrt(1 - alpha_bar)*y
+    
+    def _cos_schedule(self, x, y, t, offset=0):
+        alpha_bar = math.cos((math.pi * (self.T - t)) / (2 * (self.T)))**2
+        alpha_bar = (1 - 2*offset)*alpha_bar + offset
+        return alpha_bar*x + (1 - alpha_bar)*y
+    
+    def _linear_schedule(self, x, y, t):
+        return (t/self.T)*x + (1 - t/self.T)*y
+    
+
 class DIP_TV(BaseDIP):
     def __init__(self, net, input_size=3, lr=0.01, max_epochs=2400, alpha=1):
         super().__init__(net, input_size, lr)
@@ -213,53 +271,49 @@ class DIP_TV(BaseDIP):
         normalized = tv_norm / x.sum()
 
         return normalized.item()
-
-
-class DDIP(BaseDIP):
-    def __init__(self, net, input_size=3, lr=0.01, T=2400, schedule="cos"):
-        super().__init__(net, input_size, lr)
-
-        self.T = T
-        # self.T_ = T - 20
-        self.schedule = schedule
-
-    def __str__(self):
-        return f"DDIP ({self.schedule}, {self.T})"
     
-    def should_stop(self, state):
-        return state["epoch"] >= self.T
-    
-    def init_z(self, state):
-        x = state["x_hat"]
-        y = torch.randn_like(state["x_hat"], device=self.device)
-        return self._cos_schedule(x, y, 0)
-
-    def update_z(self, z, state):
-        x = state["x_out"]
-        y = torch.randn_like(x, device=self.device)
-        
-        if self.schedule == "old":
-            z = self._old_schedule(x, y, state["epoch"])
-        elif self.schedule == "cos":
-            z = self._cos_schedule(x, y, state["epoch"])
-        elif self.schedule == "linear":
-            z = self._linear_schedule(x, y, state["epoch"])
-
-        return z
-
-    def _old_schedule(self, x, y, t):
-        alpha_bar = math.cos((math.pi * (self.T - t)) / (2 * (self.T)))**2
-        return math.sqrt(alpha_bar)*x + math.sqrt(1 - alpha_bar)*y
-    
-    def _cos_schedule(self, x, y, t):
-        alpha_bar = math.cos((math.pi * (self.T - t)) / (2 * (self.T)))**2
-        return alpha_bar*x + (1 - alpha_bar)*y
-    
-    def _linear_schedule(self, x, y, t):
-        return (t/self.T)*x + (1 - t/self.T)*y
-
 
 # EXPERIMENTS
+
+
+class DDIP_AE(DDIP):
+    def __init__(self, net, input_size=3, lr=0.01, T=2400, schedule="cos", cos_offset=0):
+        super().__init__(net, input_size, lr, T, schedule, cos_offset)
+
+    def __str__(self):
+        return f"DDIP AE ({self.schedule}, {self.cos_offset}, {self.T})"
+    
+    def calculate_loss(self, x, y, state):
+        return super().calculate_loss(x, y) + self.mse(x, state["z"])
+    
+
+class DDIP_Dual(DDIP_AE):
+    def __init__(self, net, input_size=3, lr=0.01, T=2400, schedule="cos", cos_offset=0, k=2):
+        self.k = k
+
+        super().__init__(net, input_size, lr, k*T, schedule, cos_offset)
+
+    def __str__(self):
+        return f"DDIP Dual k={self.k} ({self.schedule}, {self.cos_offset}, {self.T})"
+    
+    def optimize(self, input, target, optimizer, state):
+        for _ in range(self.k):
+            super().optimize(input, target, optimizer, state)
+
+
+class DDIP_P(DDIP):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def __str__(self):
+        return f"DDIP Prog ({self.schedule}, {self.cos_offset}, {self.T})"
+
+    def on_epoch_end(self, state):
+        self.net.update_skip_weights(state["epoch"] / self.T)
+
+        state["metrics"]["skip_weights"] = self.net.skip_weights
+
+        return super().on_epoch_end(state)
 
 
 class SelfDIP(BaseDIP):
@@ -284,21 +338,6 @@ class DDIP_MWV(DIP_MWV, DDIP):
 
     def __str__(self):
         return "DDIP (MWV)"
-
-
-class DDIP_P(DDIP):
-    def __init__(self, net, schedule="cos"):
-        super().__init__(net, schedule=schedule)
-
-    def __str__(self):
-        return f"DDIP Prog ({self.schedule}, {self.T})"
-
-    def on_epoch_end(self, state):
-        self.net.update_skip_weights(state["epoch"] / self.T)
-
-        state["metrics"]["skip_weights"] = self.net.skip_weights
-
-        return super().on_epoch_end(state)
     
 
 class DIP_P(DIP):
@@ -314,8 +353,8 @@ class DIP_P(DIP):
         return super().on_epoch_end(state)
 
 class DDIP_Const(DDIP):
-    def __init__(self, net, schedule="cos"):
-        super().__init__(net, schedule=schedule)
+    def __init__(self, net, input_size=3, lr=0.01, T=2400, schedule="cos"):
+        super().__init__(net, input_size, lr, T, schedule)
 
     def __str__(self):
         return f"DDIP Const ({self.schedule}, {self.T})"
@@ -330,3 +369,19 @@ class DDIP_Const(DDIP):
         x = state["x_out"]
         y = state["noise"]
         return self._cos_schedule(x, y, state["epoch"])
+    
+class DIP_Noise(DIP):
+    def __init__(self, net, input_size=3, lr=0.01, max_epochs=2400):
+        super().__init__(net, input_size, lr, max_epochs)
+
+    def __str__(self):
+        return f"DIP Noise"
+    
+    def init_z(self, state):
+        noise = torch.randn_like(state["x_hat"], device=self.device)
+        return noise
+
+    def update_z(self, z, state):
+        noise = torch.randn_like(state["x_hat"], device=self.device)
+        return noise
+    
