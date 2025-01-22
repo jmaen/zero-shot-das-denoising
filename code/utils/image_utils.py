@@ -9,21 +9,21 @@ import torchvision.transforms as transforms
 import torchvision.utils as utils
 
 
-def load_image(path):
+def load_image(path, size=256):
     img = Image.open(path)
-    transform = transforms.ToTensor()
+    transform = transforms.Compose([
+        transforms.Resize((size, size)),
+        transforms.ToTensor(),
+        transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+    ])
     img = transform(img)
     return img.unsqueeze(0)
 
 
-def load_images(dir, transform=None):
+def load_images(dir, size=256):
     images = []
     for file in os.listdir(dir):
-        image = load_image(os.path.join(dir, file))
-
-        if transform is not None:
-            image = transform(image)
-
+        image = load_image(os.path.join(dir, file), size)
         images.append(image)
 
     return torch.cat(images)
@@ -33,6 +33,7 @@ def load_celeba(num_samples=1):
     transform = transforms.Compose([
         transforms.Resize((128, 128)),
         transforms.ToTensor(),
+        transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
     ])
 
     dataset = torchvision.datasets.CelebA(root='./data/', download=True, transform=transform)
@@ -45,13 +46,14 @@ def save_image(img, path):
     utils.save_image(img, path)
 
 
-def get_noisy_image(img, psnr=20):
-    mse = 1 / (10 ** (psnr / 10))
+def get_noisy_image(img, psnr=20, max=2):
+    mse = max**2 / (10 ** (psnr / 10))
     std = np.sqrt(mse)
 
     noise = torch.randn(img.size()) * std
     img = img + noise
-    return torch.clamp(img, 0, 1)
+    # img = torch.clamp(img, -1, 1)
+    return img
 
 
 def plot_row(images, labels=[], path=''):
@@ -62,7 +64,9 @@ def plot_row(images, labels=[], path=''):
         img = torch.squeeze(img)
 
         if img.min() < 0 or img.max() > 1:
-            img = (img - img.min()) / (img.max() - img.min())
+            # img = (img - img.min()) / (img.max() - img.min())
+            img = img / 2 + 0.5
+            img = img.clamp(0, 1)
         
         img = img.permute(1, 2, 0).cpu().numpy()
         

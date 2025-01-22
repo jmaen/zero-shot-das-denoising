@@ -33,17 +33,27 @@ def calculate_relative_ranks(runs, num_data, num_denoisers, denoiser_ids=None, k
     for _, group in grouped_runs.items():
         psnr_order = sorted(group, key=lambda x: x.summary["psnr"], reverse=True)
         ssim_order = sorted(group, key=lambda x: x.summary["ssim"], reverse=True)
-        lpips_order = sorted(group, key=lambda x: x.summary["lpips"])
+        # lpips_order = sorted(group, key=lambda x: x.summary["lpips"])
 
         for i in range(k):
             results[psnr_order[i].config["denoiser_id"]][f"first_{k}_count"]["psnr"] += 1
             results[ssim_order[i].config["denoiser_id"]][f"first_{k}_count"]["ssim"] += 1
-            results[lpips_order[i].config["denoiser_id"]][f"first_{k}_count"]["lpips"] += 1
+            # results[lpips_order[i].config["denoiser_id"]][f"first_{k}_count"]["lpips"] += 1
 
-        for i, (psnr_run, ssim_run, lpips_run) in enumerate(zip(psnr_order, ssim_order, lpips_order)):
+        for i, (psnr_run, ssim_run) in enumerate(zip(psnr_order, ssim_order)):
             results[psnr_run.config["denoiser_id"]]["average_rank"]["psnr"] += (i + 1)/num_data
             results[ssim_run.config["denoiser_id"]]["average_rank"]["ssim"] += (i + 1)/num_data
-            results[lpips_run.config["denoiser_id"]]["average_rank"]["lpips"] += (i + 1)/num_data
+            # results[lpips_run.config["denoiser_id"]]["average_rank"]["lpips"] += (i + 1)/num_data
 
     for denoiser, ranks in results.items():
         print(f"{denoiser}: {ranks}")
+
+
+def update_config(runs, **data):
+    if type(runs) is not list:
+        runs = [runs]
+
+    for run in runs:
+        for key, value in data.item():
+            run.config[key] = value
+            run.update()

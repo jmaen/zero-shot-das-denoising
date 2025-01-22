@@ -9,10 +9,10 @@ class ConvBlock(nn.Module):
             
         self.convs = nn.Sequential(
             nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_ch),
+            nn.InstanceNorm2d(out_ch),
             nn.LeakyReLU(0.2),
             nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_ch),
+            nn.InstanceNorm2d(out_ch),
             nn.LeakyReLU(0.2),
         )
         
@@ -27,7 +27,7 @@ class Down(nn.Module):
         self.convs = ConvBlock(in_ch, out_ch)
         self.downsample = nn.Sequential(
             nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1, stride=2),
-            nn.BatchNorm2d(out_ch),
+            nn.InstanceNorm2d(out_ch),
             nn.LeakyReLU(0.2),
         )
         
@@ -46,7 +46,7 @@ class Up(nn.Module):
         self.upsample = nn.Sequential(
             nn.Upsample(scale_factor=2, mode='bilinear'),
             nn.Conv2d(in_ch, out_ch, kernel_size=3, padding=1),
-            nn.BatchNorm2d(out_ch),
+            nn.InstanceNorm2d(out_ch),
             nn.LeakyReLU(0.2),
         )
         self.convs = ConvBlock(out_ch + skip_ch, out_ch)
@@ -65,7 +65,7 @@ class Skip(nn.Module):
 
         self.conv = nn.Sequential(
             nn.Conv2d(in_ch, out_ch, kernel_size=1),
-            nn.BatchNorm2d(out_ch),
+            nn.InstanceNorm2d(out_ch),
             nn.LeakyReLU(0.2),
         )
         
@@ -88,7 +88,7 @@ class UNetMod(nn.Module):
         self.skips = nn.ModuleList([Skip(down_dims[i], skip_ch) for i in range(1, len(down_dims))])
         self.out = nn.Sequential(
             nn.Conv2d(hidden_ch, out_ch, 1),
-            nn.Sigmoid()
+            # nn.Sigmoid()
         )
 
     def __str__(self):

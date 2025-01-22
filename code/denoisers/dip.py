@@ -6,6 +6,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torchmetrics.image import PeakSignalNoiseRatio, StructuralSimilarityIndexMeasure, LearnedPerceptualImagePatchSimilarity
 from utils import Logger
+from tqdm import tqdm
 from .denoiser import Denoiser
 
 
@@ -51,7 +52,7 @@ class BaseDIP(Denoiser):
             "x_out": None,
             "start": time.time(),
             "epoch": 0, 
-            "metrics": {},
+            "metrics": {"loss": math.inf},
             "summary": {},
             "options": options,
         }
@@ -87,7 +88,7 @@ class BaseDIP(Denoiser):
         self.on_epoch_end(state)
     
     def init_z(self, state: Dict[str, Any]) -> torch.Tensor:
-        return torch.rand_like(state["x_hat"], device=self.device) * 0.1
+        return torch.randn_like(state["x_hat"], device=self.device)
     
     def update_z(self, z: torch.Tensor, state: Dict[str, Any]) -> torch.Tensor:
         return z
@@ -113,7 +114,7 @@ class BaseDIP(Denoiser):
 
         data = state["metrics"].copy()
         if state["options"]["save_images"]:
-            data.update({"input & output": [state["z"], state["x_out"]]})
+            data["input & output"] = [state["z"], state["x_out"]]
 
         self.logger.log(data)
     
@@ -144,27 +145,18 @@ class DIP(BaseDIP):
     
 
 class DIP_MWV(BaseDIP):
-    def __init__(self, net, input_size=3, lr=0.01, window_size=100, patience=1000, z_init="gaussian"):
+    def __init__(self, net, input_size=3, lr=0.01, window_size=100, patience=1000):
         super().__init__(net, input_size, lr)
          
         self.window_size = window_size
         self.patience = patience
-        self.z_init = z_init
         self.mse = nn.MSELoss()
 
     def __str__(self):
-        return f"DIP MVW ({self.z_init})"
-    
-    def init_z(self, state: Dict[str, Any]) -> torch.Tensor:
-        if self.z_init == "uniform":
-            z = torch.rand_like(state["x_hat"], device=self.device) * 0.1
-        elif self.z_init == "gaussian":
-            z = torch.randn_like(state["x_hat"], device=self.device)
-
-        return z
+        return f"DIP MVW"
     
     def should_stop(self, state):
-        if state["epoch"] >= state["epoch_opt"] + self.patience:
+        if state["epoch"] >= 2400 or state["epoch"] >= state["epoch_opt"] + self.patience:
             state["x_out"] = state["x_opt"]
             return True
     
@@ -195,18 +187,20 @@ class DIP_MWV(BaseDIP):
         super().on_epoch_end(state)
 
     def on_train_end(self, state):
+        self.logger.mark(state["epoch_opt"])
         state["summary"]["stopping_point"] = state["epoch_opt"]
 
         super().on_train_end(state)
 
 
 class DDIP(BaseDIP):
-    def __init__(self, net, input_size=3, lr=0.01, T=2400, schedule="cos", cos_offset=0):
+    def __init__(self, net, input_size=3, lr=0.01, T=2400, schedule="cos", sqrt=True, cos_offset=0):
         super().__init__(net, input_size, lr)
 
         self.T = T
         self.schedule = schedule
         self.cos_offset = cos_offset
+        self.sqrt = sqrt
 
     def __str__(self):
         return f"DDIP ({self.schedule}, {self.cos_offset}, {self.T})"
@@ -223,26 +217,49 @@ class DDIP(BaseDIP):
         x = state["x_out"]
         y = torch.randn_like(x, device=self.device)
         
-        if self.schedule == "old":
-            z = self._old_schedule(x, y, state["epoch"])
-        elif self.schedule == "cos":
-            z = self._cos_schedule(x, y, state["epoch"], self.cos_offset)
+        if self.schedule == "cos":
+            z = self._cos_schedule(x, y, state["epoch"], self.sqrt, self.cos_offset)
         elif self.schedule == "linear":
-            z = self._linear_schedule(x, y, state["epoch"])
+            z = self._linear_schedule(x, y, state["epoch"], self.sqrt)
+        elif self.schedule == "ddpm":
+            z = self._ddpm_schedule(x, y, state["epoch"], self.sqrt)
 
         return z
-
-    def _old_schedule(self, x, y, t):
-        alpha_bar = math.cos((math.pi * (self.T - t)) / (2 * (self.T)))**2
-        return math.sqrt(alpha_bar)*x + math.sqrt(1 - alpha_bar)*y
     
-    def _cos_schedule(self, x, y, t, offset=0):
+    def _cos_schedule(self, x, y, t, sqrt=True, offset=0):
         alpha_bar = math.cos((math.pi * (self.T - t)) / (2 * (self.T)))**2
         alpha_bar = (1 - 2*offset)*alpha_bar + offset
-        return alpha_bar*x + (1 - alpha_bar)*y
+        a = alpha_bar
+        b = 1 - alpha_bar
+
+        if sqrt:
+            a = math.sqrt(a)
+            b = math.sqrt(b)
+
+        return a*x + b*y
     
-    def _linear_schedule(self, x, y, t):
-        return (t/self.T)*x + (1 - t/self.T)*y
+    def _linear_schedule(self, x, y, t, sqrt=False):
+        a = t/self.T
+        b = 1 - t/self.T
+
+        if sqrt:
+            a = math.sqrt(a)
+            b = math.sqrt(b)
+
+        return a*x + b*y
+    
+    def _ddpm_schedule(self, x, y, t, sqrt=True):
+        betas = torch.linspace(1e-4, 1e-2, self.T)
+        alphas = 1 - betas[:t]
+        alpha_bar = torch.cumprod(alphas, dim=0)[-1]
+        a = alpha_bar
+        b = 1 - alpha_bar
+
+        if sqrt:
+            a = math.sqrt(a)
+            b = math.sqrt(b)
+
+        return a*x + b*y
     
 
 class DIP_TV(BaseDIP):
@@ -256,7 +273,7 @@ class DIP_TV(BaseDIP):
     def __str__(self):
         return f"DIP-TV ({self.max_epochs})"
 
-    def calculate_loss(self, x, y):
+    def calculate_loss(self, x, y, state):
         return super().calculate_loss(x, y) + self.alpha*self._tv_norm(x)
     
     def should_stop(self, state):
@@ -276,31 +293,6 @@ class DIP_TV(BaseDIP):
 # EXPERIMENTS
 
 
-class DDIP_AE(DDIP):
-    def __init__(self, net, input_size=3, lr=0.01, T=2400, schedule="cos", cos_offset=0):
-        super().__init__(net, input_size, lr, T, schedule, cos_offset)
-
-    def __str__(self):
-        return f"DDIP AE ({self.schedule}, {self.cos_offset}, {self.T})"
-    
-    def calculate_loss(self, x, y, state):
-        return super().calculate_loss(x, y) + self.mse(x, state["z"])
-    
-
-class DDIP_Dual(DDIP_AE):
-    def __init__(self, net, input_size=3, lr=0.01, T=2400, schedule="cos", cos_offset=0, k=2):
-        self.k = k
-
-        super().__init__(net, input_size, lr, k*T, schedule, cos_offset)
-
-    def __str__(self):
-        return f"DDIP Dual k={self.k} ({self.schedule}, {self.cos_offset}, {self.T})"
-    
-    def optimize(self, input, target, optimizer, state):
-        for _ in range(self.k):
-            super().optimize(input, target, optimizer, state)
-
-
 class DDIP_P(DDIP):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -314,74 +306,114 @@ class DDIP_P(DDIP):
         state["metrics"]["skip_weights"] = self.net.skip_weights
 
         return super().on_epoch_end(state)
-
-
-class SelfDIP(BaseDIP):
-    def __init__(self, net, input_size=3, lr=0.01, T=2400):
-        super().__init__(net, input_size, lr)
-
-        self.T = T
-
-    def __str__(self):
-        return f"RDIP ({self.T})"
-    
-    def should_stop(self, state):
-        return state["epoch"] >= self.T
-
-    def update_z(self, z, state):
-        return state["x_out"]
     
 
-class DDIP_MWV(DIP_MWV, DDIP):
-    def __init__(self, net):
-        super().__init__(net)
-
-    def __str__(self):
-        return "DDIP (MWV)"
-    
-
-class DIP_P(DIP):
-    def __init__(self, net):
-        super().__init__(net)
-
-    def __str__(self):
-        return f"DIP Prog"
-    
-    def on_epoch_end(self, state):
-        self.net.update_skip_weights(state["epoch"] / self.max_epochs)
-
-        return super().on_epoch_end(state)
-
-class DDIP_Const(DDIP):
-    def __init__(self, net, input_size=3, lr=0.01, T=2400, schedule="cos"):
-        super().__init__(net, input_size, lr, T, schedule)
-
-    def __str__(self):
-        return f"DDIP Const ({self.schedule}, {self.T})"
-    
-    def init_z(self, state):
-        x = state["x_hat"]
-        y = torch.randn_like(state["x_hat"], device=self.device)
-        state["noise"] = y
-        return self._cos_schedule(x, y, 0)
-
-    def update_z(self, z, state):
-        x = state["x_out"]
-        y = state["noise"]
-        return self._cos_schedule(x, y, state["epoch"])
-    
-class DIP_Noise(DIP):
+class DIP2Self(DIP):
     def __init__(self, net, input_size=3, lr=0.01, max_epochs=2400):
         super().__init__(net, input_size, lr, max_epochs)
 
     def __str__(self):
-        return f"DIP Noise"
-    
-    def init_z(self, state):
-        noise = torch.randn_like(state["x_hat"], device=self.device)
-        return noise
+        return f"DIP2Self"
 
-    def update_z(self, z, state):
-        noise = torch.randn_like(state["x_hat"], device=self.device)
-        return noise
-    
+    def calculate_loss(self, x, y, state=None):
+        # Get image dimensions
+        _, _, H, W = x.shape
+        
+        # Define possible offsets for neighbors (top, bottom, left, right, and diagonals)
+        offsets = [(-1, 0), (0, -1), (0, 1), (1, 0)]
+        
+        # Randomly select one offset for each pixel
+        offsets = torch.tensor(offsets, device=x.device)
+        random_offsets = offsets[torch.randint(0, len(offsets), (H, W), device=x.device)]
+        
+        # Create shifted indices
+        i_indices = torch.arange(H, device=x.device).view(-1, 1).expand(H, W) + random_offsets[..., 0]
+        j_indices = torch.arange(W, device=x.device).view(1, -1).expand(H, W) + random_offsets[..., 1]
+        
+        # Clamp indices to image boundaries
+        i_indices = torch.clamp(i_indices, 0, H - 1)
+        j_indices = torch.clamp(j_indices, 0, W - 1)
+        
+        # Gather random neighboring pixels from the target
+        y = y[:, :, i_indices, j_indices]
+            
+        return super().calculate_loss(x, y, state)
+
+
+class DIP2Self_MWV(DIP_MWV, DIP2Self):
+    def __init__(self, net):
+        super().__init__(net)
+
+    def __str__(self):
+        return "DIP2Self (MWV)"
+
+
+class SGDIP(DIP):
+    def __init__(self, net, input_size=3, lr=0.01, max_epochs=2400):
+        super().__init__(net, input_size=input_size, lr=lr, max_epochs=max_epochs)
+
+    def __str__(self):
+        return "SGDIP"
+
+    def denoise(self, x_hat, x=None, options={}):
+        self.net.to(self.device)
+        z = torch.randn_like(x_hat, device=self.device, requires_grad=True)
+
+        optimizer = optim.Adam(self.net.parameters(), self.lr)
+        optimizer2 = optim.Adam([z], 0.01)
+
+        x_hat = x_hat.to(self.device)
+        if x is not None:
+            x = x.to(self.device)
+
+        state = {
+            "x_hat": x_hat,
+            "x": x, 
+            "x_out": None,
+            "start": time.time(),
+            "epoch": 0, 
+            "metrics": {"loss": math.inf},
+            "summary": {},
+            "options": options,
+        }
+
+        self.net.train()
+
+        self.on_train_start(state)
+        while not self.should_stop(state):
+            state["z"] = z.detach().clone()
+
+            optimizer.zero_grad()
+            optimizer2.zero_grad()
+
+            sigma = torch.max(z) / 2
+            out = torch.zeros_like(x_hat, device=self.device)
+            for _ in range(3):
+                noise = torch.randn_like(z, device=self.device) * sigma
+                o = self.net(z + noise)
+                out += o
+            out /= 3
+            loss = self.mse(out, x_hat) + self.mse(out, z)
+
+            loss.backward()
+            optimizer.step()
+            optimizer2.step()
+
+            state["epoch"] += 1
+            state["x_out"] = out.detach()
+            state["metrics"]["loss"] = loss.item()
+            self.on_epoch_end(state)
+
+        self.on_train_end(state)
+
+        self.net.reset_parameters()
+
+        return state["x_out"]
+
+
+class SGDIP_MWV(DIP_MWV, SGDIP):
+    def __init__(self, net):
+        super().__init__(net)
+
+    def __str__(self):
+        return "SGDIP (MWV)"

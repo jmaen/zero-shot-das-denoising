@@ -8,7 +8,6 @@ import wandb
 from IPython.display import Video, HTML, display
 
 
-# TODO: add method to plot line / marker at specific step (e.g. stopping point, skip fadein, ...)
 class Logger():
     def __init__(self):
         self.colors = [
@@ -31,6 +30,7 @@ class Logger():
 
         if self.mode == "local":
             self.data = {}
+            self.markers = []
             self.step = 0
         elif self.mode == "wandb":
             wandb.init(
@@ -64,6 +64,15 @@ class Logger():
 
         self.step += 1
 
+    def mark(self, step=None):
+        if self.mode != "local":
+            return
+        
+        if step is None:
+            step = self.step
+
+        self.markers.append(step)
+
     def finish(self, summary: Dict[str, Any]):
         if self.mode == "local":
             print(f"Summary: {summary}\n")
@@ -75,11 +84,28 @@ class Logger():
     # TODO: cleanup
 
     def display(self):
-        metrics = {key: value for key, value in self.data.items() if isinstance(value[0], (int, float)) or (isinstance(value[0], list) and isinstance(value[0][0], (int, float)))}
+        metrics = self.filter_data(self.data, (int, float))
         self.visualize_metrics(metrics)
 
-        tensors = {key: value for key, value in self.data.items() if isinstance(value[0], torch.Tensor) or (isinstance(value[0], list) and isinstance(value[0][0], torch.Tensor))}
+        tensors = self.filter_data(self.data, torch.Tensor)
         self.visualize_tensors(tensors)
+
+    def filter_data(self, data, type):
+        filtered_data = {}
+        for key, values in data.items():
+            for value in values:
+                if value is None:
+                    continue
+
+                if isinstance(value, list):
+                    value = value[0]
+
+                if isinstance(value, type):
+                    filtered_data[key] = values
+
+                break
+
+        return filtered_data
 
     def visualize_metrics(self, metrics):
         num_metrics = len(metrics)
@@ -98,8 +124,11 @@ class Logger():
             else:
                 y_values = [math.nan if elem is None else elem for elem in y_values]
                 ax.plot(x_values, y_values, color=color)
-            ax.set_title(key, fontsize=10)
 
+            for marker in self.markers:
+                ax.axvline(x=marker, color="#DB324D")
+
+            ax.set_title(key, fontsize=10)
             ax.set_xlabel("Step") 
             ax.set_ylabel("Value") 
 
@@ -127,6 +156,8 @@ class Logger():
             frame = self.concatenate_tensors(tensor)
         else:
             tensor = tensor.squeeze()
+            tensor = tensor / 2 + 0.5
+            tensor = tensor.clamp(0, 1)
             frame = (tensor.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
 
         height, width, _ = frame.shape
@@ -147,6 +178,8 @@ class Logger():
         resized_frames = []
         for tensor in tensors:
             tensor = tensor.squeeze()
+            tensor = tensor / 2 + 0.5
+            tensor = tensor.clamp(0, 1)
             frame = (tensor.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
             resized_frame = self.resize_frame(frame, target_height)
             resized_frames.append(resized_frame)
