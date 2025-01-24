@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.optim as optim
 from tqdm import tqdm
@@ -16,7 +17,7 @@ class DDIP(Base):
         self.normalize = normalize
 
     def __str__(self):
-        return f"DDIP ({str(self.schedule)})"
+        return f"DDIP{" - ES" if self.early_stopping else ""} ({str(self.schedule)})"
     
     def optimize(self, y, state):
         optimizer = optim.Adam(self.net.parameters(), lr=self.lr)
@@ -27,9 +28,9 @@ class DDIP(Base):
 
             alpha_bar = self.schedule(epoch / self.max_epochs)
             if self.normalize:
-                z = torch.sqrt(alpha_bar)*x_hat + torch.sqrt(1 - alpha_bar)*torch.randn_like(y, device=self.device)
+                z = math.sqrt(alpha_bar)*x_hat.detach() + math.sqrt(1 - alpha_bar)*torch.randn_like(y, device=self.device)
             else:
-                z = alpha_bar*x_hat + (1 - alpha_bar)*torch.randn_like(y, device=self.device)
+                z = alpha_bar*x_hat.detach() + (1 - alpha_bar)*torch.randn_like(y, device=self.device)
 
             x_hat = self.net(z)
             loss = self.loss(x_hat, y)
@@ -41,7 +42,7 @@ class DDIP(Base):
             state["x_hat"] = x_hat.detach().clone()
             state["epoch"] = epoch
             state["metrics"]["loss"] = loss.item()
-            state["metrics"]["alpha_bar"] = alpha_bar.item()
+            state["metrics"]["alpha_bar"] = alpha_bar
             self.on_epoch_end(state)
 
             if self.should_stop(state):

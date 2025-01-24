@@ -31,7 +31,7 @@ class Base(Denoiser):
         self.logger = Logger()
 
     def name(self):
-        return f"{str(self)} {"- ES " if self.early_stopping else ""}| {str(self.loss)} | {str(self.net)}"
+        return f"{str(self)} | {str(self.loss)} | {str(self.net)}"
 
     def denoise(self, y: torch.Tensor, x: torch.Tensor = None, logging_options: LoggingOptions = None):
         if logging_options is None:
@@ -83,7 +83,7 @@ class Base(Denoiser):
     
     def should_stop(self, state):
         if self.early_stopping and state["epoch"] >= state["epoch_opt"] + self.patience:
-            state["x_out"] = state["x_opt"]
+            state["x_hat"] = state["x_opt"]
             return True
 
         return False

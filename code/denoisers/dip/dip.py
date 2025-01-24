@@ -12,7 +12,7 @@ class DIP(Base):
         self.max_epochs = max_epochs
 
     def __str__(self):
-        return "DIP"
+        return f"DIP{" - ES" if self.early_stopping else ""}"
 
     def optimize(self, y, state):
         z = torch.randn_like(y, device=self.device)

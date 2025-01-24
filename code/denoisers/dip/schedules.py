@@ -3,7 +3,7 @@ import torch
 
 
 class Schedule:
-    def __call__(self, t: float) -> torch.Tensor:
+    def __call__(self, t: float) -> float:
         raise NotImplementedError("Schedule must be implemented by subclass")
 
 
@@ -14,7 +14,7 @@ class Cos(Schedule):
     def __str__(self):
         return "Cos"
     
-    def __call__(self, t: float) -> torch.Tensor:
+    def __call__(self, t):
         x = math.cos((1 - t) * math.pi/2)**2
         x = x*(1 - 2*self.offset) + self.offset
         return x
@@ -27,7 +27,7 @@ class Linear(Schedule):
     def __str__(self):
         return "Linear"
     
-    def __call__(self, t: float) -> torch.Tensor:
+    def __call__(self, t):
         return t*(1 - 2*self.offset) + self.offset
     
 
@@ -44,4 +44,4 @@ class DDPM(Schedule):
     def __call__(self, t):
         # FIXME: round to avoid numerical issues
         t = round(t * self.T)
-        return self.alpha_bar[self.T - t]
+        return self.alpha_bar[self.T - t].item()

@@ -15,7 +15,7 @@ class SGDIP(Base):
         self.ratio = ratio
 
     def __str__(self):
-        return f"SGDIP (k={self.k}, r={self.ratio})"
+        return f"SGDIP{" - ES" if self.early_stopping else ""} (k={self.k}, r={self.ratio})"
     
     def optimize(self, y, state):
         z = torch.randn_like(y, device=self.device, requires_grad=True)
