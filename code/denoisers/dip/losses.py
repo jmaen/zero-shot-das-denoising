@@ -14,7 +14,7 @@ class Composed(Loss):
         self.alpha = alpha
     
     def __str__(self):
-        return f"{str(self.loss1)} + {str(self.loss2)}"
+        return f"{str(self.loss1)} + {str(self.loss2)} (alpha={self.alpha})"
     
     def __call__(self, x, y, z):
         return self.loss1(x, y, z) + self.alpha*self.loss2(x, y, z)
@@ -70,10 +70,10 @@ class TV(Loss):
         return self._tv_norm(x)
     
     def _tv_norm(self, x):
-        # FIXME
-        diff_v = torch.abs(x[:, :-1, :] - x[:, 1:, :])
-        diff_h = torch.abs(x[:, :, :-1] - x[:, :, 1:])
+        diff_v = torch.abs(x[:, :, :-1, :] - x[:, :, 1:, :])
+        diff_h = torch.abs(x[:, :, :, :-1] - x[:, :, :, 1:])
 
         tv_norm = torch.sum(diff_v) + torch.sum(diff_h)
+        tv_norm = tv_norm / x.numel()
 
         return tv_norm
