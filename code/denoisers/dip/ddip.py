@@ -33,7 +33,7 @@ class DDIP(Base):
                 z = alpha_bar*x_hat.detach() + (1 - alpha_bar)*torch.randn_like(y, device=self.device)
 
             x_hat = self.net(z)
-            loss = self.loss(x_hat, y, z)
+            loss = self.loss(x_hat, y, z, epoch / self.max_epochs)
 
             loss.backward()
             optimizer.step()

@@ -1,30 +1,37 @@
 import torch
 from torch.nn.functional import mse_loss
+from .schedules import Schedule
 
 
 class Loss:
-    def __call__(self, x: torch.Tensor, y: torch.Tensor, z: torch.Tensor) -> torch.Tensor:
+    def __call__(self, x: torch.Tensor, y: torch.Tensor, z: torch.Tensor, t: float) -> torch.Tensor:
         raise NotImplementedError("Loss function must be implemented by subclass")
     
 
 class Composed(Loss):
-    def __init__(self, loss1, loss2, alpha=1):
+    def __init__(self, loss1: Loss, loss2: Loss, alpha: float | Schedule = 1):
         self.loss1 = loss1
         self.loss2 = loss2
         self.alpha = alpha
     
     def __str__(self):
-        return f"{str(self.loss1)} + {str(self.loss2)} (alpha={self.alpha})"
+        return f"{str(self.loss1)} + {str(self.loss2)} (alpha={str(self.alpha)})"
     
-    def __call__(self, x, y, z):
-        return self.loss1(x, y, z) + self.alpha*self.loss2(x, y, z)
+    def __call__(self, x, y, z, t):
+        alpha = self.alpha
+        if isinstance(alpha, Schedule):
+            alpha = self.alpha(t)
+        return self.loss1(x, y, z, t) + alpha*self.loss2(x, y, z, t)
+    
+    def with_alpha(self, alpha):
+        return Composed(self.loss1, self.loss2, alpha)
 
 
 class MSE(Loss):
     def __str__(self):
         return "MSE"
     
-    def __call__(self, x, y, z):
+    def __call__(self, x, y, z, t):
         return mse_loss(x, y)
 
 
@@ -32,7 +39,7 @@ class NMSE(Loss):
     def __str__(self):
         return "NMSE"
     
-    def __call__(self, x, y, z):
+    def __call__(self, x, y, z, t):
         y = self._random_neighbors(y)
         return mse_loss(x, y)
     
@@ -58,7 +65,7 @@ class AE(Loss):
     def __str__(self):
         return "AE"
     
-    def __call__(self, x, y, z):
+    def __call__(self, x, y, z, t):
         return mse_loss(x, z)
 
 
@@ -66,7 +73,7 @@ class TV(Loss):
     def __str__(self):
         return "TV"
     
-    def __call__(self, x, y, z):
+    def __call__(self, x, y, z, t):
         return self._tv_norm(x)
     
     def _tv_norm(self, x):

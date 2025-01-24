@@ -23,7 +23,7 @@ class DIP(Base):
             optimizer.zero_grad()
 
             x_hat = self.net(z)
-            loss = self.loss(x_hat, y, z)
+            loss = self.loss(x_hat, y, z, epoch / self.max_epochs)
             
             loss.backward()
             optimizer.step()
