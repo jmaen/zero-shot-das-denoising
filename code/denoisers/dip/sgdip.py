@@ -33,7 +33,7 @@ class SGDIP(Base):
                 noise = torch.randn_like(z, device=self.device) * std
                 x_hat += self.net(z + noise)
             x_hat /= self.k
-            loss = self.loss(x_hat, y)
+            loss = self.loss(x_hat, y, z)
 
             loss.backward()
             optimizer.step()

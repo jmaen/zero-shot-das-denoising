@@ -3,27 +3,40 @@ from torch.nn.functional import mse_loss
 
 
 class Loss:
-    def __call__(self, x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
+    def __call__(self, x: torch.Tensor, y: torch.Tensor, z: torch.Tensor) -> torch.Tensor:
         raise NotImplementedError("Loss function must be implemented by subclass")
+    
+
+class Composed(Loss):
+    def __init__(self, loss1, loss2, alpha=1):
+        self.loss1 = loss1
+        self.loss2 = loss2
+        self.alpha = alpha
+    
+    def __str__(self):
+        return f"{str(self.loss1)} + {str(self.loss2)}"
+    
+    def __call__(self, x, y, z):
+        return self.loss1(x, y, z) + self.alpha*self.loss2(x, y, z)
 
 
 class MSE(Loss):
     def __str__(self):
         return "MSE"
     
-    def __call__(self, x, y):
+    def __call__(self, x, y, z):
         return mse_loss(x, y)
 
 
-class Neighbourhood(Loss):
+class NMSE(Loss):
     def __str__(self):
-        return "Neighbourhood"
+        return "NMSE"
     
-    def __call__(self, x, y):
-        y = self._random_neighbours(y)
+    def __call__(self, x, y, z):
+        y = self._random_neighbors(y)
         return mse_loss(x, y)
     
-    def _random_neighbours(self, y):
+    def _random_neighbors(self, y):
         _, _, H, W = y.shape
         
         offsets = [(-1, 0), (0, -1), (0, 1), (1, 0)]
@@ -39,22 +52,22 @@ class Neighbourhood(Loss):
         y = y[:, :, v_indices, h_indices]
 
         return y
+    
+
+class AE(Loss):
+    def __str__(self):
+        return "AE"
+    
+    def __call__(self, x, y, z):
+        return mse_loss(x, z)
 
 
 class TV(Loss):
-    def __init__(self, loss=None, alpha=1):
-        super().__init__()
-
-        if loss is None:
-            loss = MSE()
-        self.loss = loss
-        self.alpha = alpha
-
     def __str__(self):
         return "TV"
     
-    def __call__(self, x, y):
-        return self.loss(x, y) + self.alpha*self._tv_norm(x)
+    def __call__(self, x, y, z):
+        return self._tv_norm(x)
     
     def _tv_norm(self, x):
         # FIXME
