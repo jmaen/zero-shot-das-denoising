@@ -88,7 +88,6 @@ class UNetMod(nn.Module):
         self.skips = nn.ModuleList([Skip(down_dims[i], skip_ch) for i in range(1, len(down_dims))])
         self.out = nn.Sequential(
             nn.Conv2d(hidden_ch, out_ch, 1),
-            # nn.Sigmoid()
         )
 
     def __str__(self):

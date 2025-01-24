@@ -3,8 +3,8 @@ import torch
 
 
 class Denoiser:
-  def key(self) -> str:
-    return id(self)
+    def name(self) -> str:
+        return id(self)
 
-  def denoise(self, x_hat: torch.Tensor, x: torch.Tensor = None, options: Dict[str, Any] = {}) -> torch.Tensor:
-    raise NotImplementedError("Denoising function must be implemented by subclass")
+    def denoise(self, x: torch.Tensor, y: torch.Tensor = None, **kwargs) -> torch.Tensor:
+        raise NotImplementedError("Denoising function must be implemented by subclass")

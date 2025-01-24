@@ -25,7 +25,7 @@ class Logger():
     def init_run(self, mode: str, options: Dict[str, Any]):
         self.mode = mode
 
-        self.name = f"{options["data_id"]} - {options["variant"]} - {options["architecture"]}"
+        self.name = f"{options["data_id"]} - {options["variant"]} - {options["loss"]} - {options["architecture"]}"
         print(f"Running: {self.name}")
 
         if self.mode == "local":

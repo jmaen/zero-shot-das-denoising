@@ -1,0 +1,50 @@
+import torch
+import torch.optim as optim
+from tqdm import tqdm
+from .base import Base
+from .schedules import Schedule
+
+
+class DDIP(Base):
+    def __init__(self, net, loss, schedule: Schedule, early_stopping=False, lr=0.01, max_epochs=2000, normalize=True, **kwargs):
+        super().__init__(net, loss, early_stopping, **kwargs)
+
+        self.lr = lr
+        self.max_epochs = max_epochs
+
+        self.schedule = schedule
+        self.normalize = normalize
+
+    def __str__(self):
+        return f"DDIP ({str(self.schedule)})"
+    
+    def optimize(self, y, state):
+        optimizer = optim.Adam(self.net.parameters(), lr=self.lr)
+
+        x_hat = y   # use noisy signal as initialization
+        for epoch in tqdm(range(self.max_epochs)):
+            optimizer.zero_grad()
+
+            alpha_bar = self.schedule(epoch / self.max_epochs)
+            if self.normalize:
+                z = torch.sqrt(alpha_bar)*x_hat + torch.sqrt(1 - alpha_bar)*torch.randn_like(y, device=self.device)
+            else:
+                z = alpha_bar*x_hat + (1 - alpha_bar)*torch.randn_like(y, device=self.device)
+
+            x_hat = self.net(z)
+            loss = self.loss(x_hat, y)
+
+            loss.backward()
+            optimizer.step()
+
+            state["z"] = z.detach().clone()
+            state["x_hat"] = x_hat.detach().clone()
+            state["epoch"] = epoch
+            state["metrics"]["loss"] = loss.item()
+            state["metrics"]["alpha_bar"] = alpha_bar.item()
+            self.on_epoch_end(state)
+
+            if self.should_stop(state):
+                break
+
+        return state["x_hat"]
