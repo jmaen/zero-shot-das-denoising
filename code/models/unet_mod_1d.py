@@ -2,16 +2,15 @@ import torch
 import torch.nn as nn
 
 
-# TODO: add skip schedules
 class ConvBlock(nn.Module):
     def __init__(self, in_ch, out_ch):
         super().__init__()
             
         self.convs = nn.Sequential(
-            nn.Conv1d(in_ch, out_ch, kernel_size=3, padding=1),
+            nn.Conv1d(in_ch, out_ch, kernel_size=31, padding=15),
             nn.InstanceNorm1d(out_ch),
             nn.LeakyReLU(0.2),
-            nn.Conv1d(out_ch, out_ch, kernel_size=3, padding=1),
+            nn.Conv1d(out_ch, out_ch, kernel_size=31, padding=15),
             nn.InstanceNorm1d(out_ch),
             nn.LeakyReLU(0.2),
         )
@@ -26,7 +25,7 @@ class Down(nn.Module):
 
         self.convs = ConvBlock(in_ch, out_ch)
         self.downsample = nn.Sequential(
-            nn.Conv1d(out_ch, out_ch, kernel_size=3, padding=1, stride=2),
+            nn.Conv1d(out_ch, out_ch, kernel_size=31, padding=15, stride=2),
             nn.InstanceNorm1d(out_ch),
             nn.LeakyReLU(0.2),
         )
@@ -45,7 +44,7 @@ class Up(nn.Module):
         
         self.upsample = nn.Sequential(
             nn.Upsample(scale_factor=2, mode='linear'),
-            nn.Conv1d(in_ch, out_ch, kernel_size=3, padding=1),
+            nn.Conv1d(in_ch, out_ch, kernel_size=31, padding=15),
             nn.InstanceNorm1d(out_ch),
             nn.LeakyReLU(0.2),
         )
@@ -64,7 +63,7 @@ class Skip(nn.Module):
         super().__init__()
 
         self.conv = nn.Sequential(
-            nn.Conv1d(in_ch, out_ch, kernel_size=1),
+            nn.Conv1d(in_ch, out_ch, kernel_size=31, padding=15),
             nn.InstanceNorm1d(out_ch),
             nn.LeakyReLU(0.2),
         )

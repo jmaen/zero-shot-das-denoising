@@ -95,7 +95,7 @@ class Base(Denoiser):
             state["epoch_opt"] = 0
             state["x_opt"] = None
 
-    def on_epoch_end(self, state: Dict[str, Any]): 
+    def on_epoch_end(self, state: Dict[str, Any]):
         if self.early_stopping:       
             queue = state["queue"]
             queue.append(state["x_hat"])

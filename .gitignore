@@ -164,5 +164,5 @@ wandb/
 test.ipynb
 
 # data
-celeba/
-commonvoice/
+CelebA/
+LibriSpeech/

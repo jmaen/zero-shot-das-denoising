@@ -144,7 +144,8 @@ class Logger():
 
             height, width, _ = frames[0].shape
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
-            video_writer = cv2.VideoWriter(f"output/videos/{self.name}_{key}.mp4", fourcc, 60, (width, height))
+
+            video_writer = cv2.VideoWriter(f"output/audio/{self.name}_{key}.mp4", fourcc, 60, (width, height))
 
             for frame in frames:
                 video_writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
@@ -180,6 +181,10 @@ class Logger():
             tensor = tensor.squeeze()
             tensor = tensor / 2 + 0.5
             tensor = tensor.clamp(0, 1)
+            if len(tensor) != 3:
+                # tensor = tensor[:1].expand((3, -1, -1))
+                tensor[1] = torch.zeros_like(tensor[0])
+                tensor = torch.cat([tensor, torch.zeros_like(tensor[:1])], dim=0)
             frame = (tensor.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
             resized_frame = self.resize_frame(frame, target_height)
             resized_frames.append(resized_frame)
