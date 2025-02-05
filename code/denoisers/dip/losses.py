@@ -17,7 +17,7 @@ class Composed(Loss):
     def __str__(self):
         return f"{str(self.loss1)} + {str(self.loss2)} (alpha={str(self.alpha)})"
     
-    def __call__(self, x, y, z, t):
+    def __call__(self, x, y, z=None, t=None):
         alpha = self.alpha
         if isinstance(alpha, Schedule):
             alpha = self.alpha(t)
@@ -31,7 +31,7 @@ class MSE(Loss):
     def __str__(self):
         return "MSE"
     
-    def __call__(self, x, y, z, t):
+    def __call__(self, x, y, z=None, t=None):
         return mse_loss(x, y)
 
 
@@ -39,7 +39,7 @@ class NMSE(Loss):
     def __str__(self):
         return "NMSE"
     
-    def __call__(self, x, y, z, t):
+    def __call__(self, x, y, z=None, t=None):
         y = self._random_neighbors(y)
         return mse_loss(x, y)
     
@@ -65,7 +65,7 @@ class AE(Loss):
     def __str__(self):
         return "AE"
     
-    def __call__(self, x, y, z, t):
+    def __call__(self, x, y, z, t=None):
         return mse_loss(x, z)
 
 
@@ -73,7 +73,7 @@ class TV(Loss):
     def __str__(self):
         return "TV"
     
-    def __call__(self, x, y, z, t):
+    def __call__(self, x, y, z=None, t=None):
         return self._tv_norm(x)
     
     def _tv_norm(self, x):

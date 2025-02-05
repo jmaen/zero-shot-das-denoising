@@ -76,7 +76,8 @@ class Logger():
     def finish(self, summary: Dict[str, Any]):
         if self.mode == "local":
             print(f"Summary: {summary}\n")
-            self.display()
+            if self.step > 0:
+                self.display()
         elif self.mode == "wandb":
             wandb.run.summary.update(summary)
             wandb.finish()
@@ -85,10 +86,12 @@ class Logger():
 
     def display(self):
         metrics = self.filter_data(self.data, (int, float))
-        self.visualize_metrics(metrics)
+        if len(metrics) > 0:
+            self.visualize_metrics(metrics)
 
         tensors = self.filter_data(self.data, torch.Tensor)
-        self.visualize_tensors(tensors)
+        if len(tensors) > 0:
+            self.visualize_tensors(tensors)
 
     def filter_data(self, data, type):
         filtered_data = {}
@@ -181,10 +184,10 @@ class Logger():
             tensor = tensor.squeeze()
             tensor = tensor / 2 + 0.5
             tensor = tensor.clamp(0, 1)
+            if tensor.dim() != 3:
+                tensor = tensor.unsqueeze(0)
             if len(tensor) != 3:
-                # tensor = tensor[:1].expand((3, -1, -1))
-                tensor[1] = torch.zeros_like(tensor[0])
-                tensor = torch.cat([tensor, torch.zeros_like(tensor[:1])], dim=0)
+                tensor = tensor[:1].expand((3, -1, -1))
             frame = (tensor.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
             resized_frame = self.resize_frame(frame, target_height)
             resized_frames.append(resized_frame)
