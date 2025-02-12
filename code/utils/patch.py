@@ -4,7 +4,7 @@ import numpy as np
 import scipy.stats as stats
 
 
-def patch(x, patch_size=24, stride=6):
+def patch(x, patch_size=16, stride=4):
     _, _, W, H = x.shape
     pad_w = (patch_size - W % patch_size) % patch_size
     pad_h = (patch_size - H % patch_size) % patch_size
@@ -23,7 +23,7 @@ def patch(x, patch_size=24, stride=6):
     return patches
 
 
-def unpatch(patches, shape, patch_size=24, stride=6):
+def unpatch(patches, shape, patch_size=16, stride=4):
     C = patches.shape[1]
 
     # num_patches_w = math.isqrt(N)

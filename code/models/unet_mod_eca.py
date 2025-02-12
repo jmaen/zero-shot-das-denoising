@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import math
 
 
 # TODO: add skip schedules
@@ -64,20 +63,17 @@ class ECA(nn.Module):
     def __init__(self, channels, gamma=2, b=1):
         super().__init__()
 
-        kernel_size = int(abs((math.log2(channels) + b) / gamma))
-        if kernel_size % 2 != 0:
-            kernel_size += 1
-
+        kernel_size = int(abs((torch.log2(torch.tensor(channels)) * gamma + b).item())) | 1  # Ensure it's odd
         self.global_avg_pool = nn.AdaptiveAvgPool2d(1)  # (B, C, 1, 1)
-        self.conv = nn.Conv1d(1, 1, kernel_size=kernel_size, padding=kernel_size // 2, bias=False)
+        self.conv1d = nn.Conv1d(1, 1, kernel_size=kernel_size, padding=kernel_size // 2, bias=False)
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, x):
         b, c, _, _ = x.size()
         y = self.global_avg_pool(x).view(b, 1, c)  # (B, 1, C)
-        y = self.conv(y).view(b, c, 1, 1)  # (B, C, 1, 1)
+        y = self.conv1d(y).view(b, c, 1, 1)  # (B, C, 1, 1)
         y = self.sigmoid(y)
-        return x * y.expand_as(x)
+        return x * y.expand_as(x)  # Scale input
         
 
 class UNetModECA(nn.Module):
