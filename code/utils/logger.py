@@ -141,23 +141,26 @@ class Logger():
         plt.tight_layout()
         plt.show()
 
-    def visualize_tensors(self, tensors):
+    def visualize_tensors(self, tensors, seismic=True):
         for key, values in tensors.items():
-            frames = [self.tensor_to_frame(value, i) for i, value in enumerate(values)]
+            frames = [self.tensor_to_frame(value, i, seismic) for i, value in enumerate(values)]
 
             height, width, _ = frames[0].shape
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
-            video_writer = cv2.VideoWriter(f"output/audio/{self.name}_{key}.mp4", fourcc, 60, (width, height))
+            video_writer = cv2.VideoWriter(f"output/das/{self.name}_{key}.mp4", fourcc, 60, (width, height))
 
             for frame in frames:
+                if seismic:
+                    frame = (plt.cm.seismic(frame[:, :, 0])[:, :, :3] * 255).astype(np.uint8)
+
                 video_writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
 
             video_writer.release()
 
-    def tensor_to_frame(self, tensor, step):
+    def tensor_to_frame(self, tensor, step, seismic=False):
         if isinstance(tensor, list):
-            frame = self.concatenate_tensors(tensor)
+            frame = self.concatenate_tensors(tensor, seismic=seismic)
         else:
             tensor = tensor.squeeze()
             tensor = tensor / 2 + 0.5
@@ -178,12 +181,16 @@ class Logger():
 
         return new_frame
     
-    def concatenate_tensors(self, tensors, target_height=256, separator_width=10):
+    def concatenate_tensors(self, tensors, target_height=256, separator_width=10, seismic=False):
         resized_frames = []
         for tensor in tensors:
             tensor = tensor.squeeze()
-            tensor = tensor / 2 + 0.5
-            tensor = tensor.clamp(0, 1)
+            if seismic:
+                vmin, vmax = -20, 20
+                tensor = (tensor - vmin) / (vmax - vmin) 
+            else:
+                tensor = tensor / 2 + 0.5
+                tensor = tensor.clamp(0, 1)
             if tensor.dim() != 3:
                 tensor = tensor.unsqueeze(0)
             if len(tensor) != 3:

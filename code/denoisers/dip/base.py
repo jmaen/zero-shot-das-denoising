@@ -118,7 +118,9 @@ class Base(Denoiser):
                 state["metrics"][key] = result
 
         if self.log_output:
-            output = [state["y"], state["z"], state["x_hat"]]
+            output = [state["y"], state["x_hat"]]
+            if state["z"] is not None:
+                output.insert(1, state["z"])
             if state["x"] is not None:
                 output.append(state["x"])
             state["metrics"]["output"] = output
