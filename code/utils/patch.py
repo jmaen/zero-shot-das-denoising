@@ -6,16 +6,15 @@ import scipy.stats as stats
 
 def patch(x, patch_size=16, stride=4):
     _, _, W, H = x.shape
+
     pad_w = (patch_size - W % patch_size) % patch_size
     pad_h = (patch_size - H % patch_size) % patch_size
-
     x = F.pad(x, (0, pad_h, 0, pad_w), mode="constant", value=0)
-
-    _, _, W, H = x.shape
+    _, _, W_pad, H_pad = x.shape
 
     patches = []
-    for i in range(0, W - patch_size + 1, stride):  
-        for j in range(0, H - patch_size + 1, stride):
+    for i in range(0, W_pad - patch_size + 1, stride):  
+        for j in range(0, H_pad - patch_size + 1, stride):
             patch = x[:, :, i:i+patch_size, j:j+patch_size]
             patches.append(patch)
     patches = torch.cat(patches, dim=0)
@@ -25,24 +24,26 @@ def patch(x, patch_size=16, stride=4):
 
 def unpatch(patches, shape, patch_size=16, stride=4):
     C = patches.shape[1]
-
-    # num_patches_w = math.isqrt(N)
-    # num_patches_h = N // num_patches_w
-    # W = stride*(num_patches_w - 1) + patch_size
-    # H = stride*(num_patches_h - 1) + patch_size
-
     W, H = shape
 
-    x = torch.zeros((1, C, W, H), device=patches.device)
-    overlap_map = torch.zeros((1, C, W, H), device=patches.device)  # count overlaps for mean calculation
+    pad_w = (patch_size - W % patch_size) % patch_size
+    pad_h = (patch_size - H % patch_size) % patch_size
+    W_pad = W + pad_w
+    H_pad = H + pad_h
+
+    x = torch.zeros((1, C, W_pad, H_pad), device=patches.device)
+    overlap_map = torch.zeros((1, C, W_pad, H_pad), device=patches.device)  # count overlaps for mean calculation
     k = 0
-    for i in range(0, W - patch_size + 1, stride):
-        for j in range(0, H - patch_size + 1, stride):
+    for i in range(0, W_pad - patch_size + 1, stride):
+        for j in range(0, H_pad - patch_size + 1, stride):
             x[:, :, i:i+patch_size, j:j+patch_size] += patches[k]
             overlap_map[:, :, i:i+patch_size, j:j+patch_size] += 1
             k += 1
 
     x /= overlap_map
+
+    x = x[:, :, :W, :H]
+
     return x
 
 
@@ -50,7 +51,9 @@ def filter_patches(patches, alpha):
     flattened_patches = patches.flatten(start_dim=1)
 
     kurtosis = stats.kurtosis(flattened_patches.cpu(), axis=1)
-    threshold = np.percentile(kurtosis, alpha*100)
+    
+    filtered_kurtosis = kurtosis[~np.isnan(kurtosis)]  # kurtosis is NaN for constant patches
+    threshold = np.percentile(filtered_kurtosis, alpha*100)
     
     selected_columns = kurtosis > threshold
     patches = patches[selected_columns, :]

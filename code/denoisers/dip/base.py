@@ -2,6 +2,7 @@ import time
 from typing import Any, Dict, Literal, TypedDict
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from utils import Logger
 from ..denoiser import Denoiser
 
@@ -34,6 +35,7 @@ class Base(Denoiser):
         return f"{str(self)} | {str(self.loss)} | {str(self.net)}"
 
     def denoise(self, y: torch.Tensor, x: torch.Tensor = None, logging_options: LoggingOptions = None):
+        # logging
         if logging_options is None:
             logging_options = {
                 "mode": "local",
@@ -53,10 +55,18 @@ class Base(Denoiser):
 
         self.logger.init_run(logging_options["mode"], logging_options["config"])
 
+        # padding
+        W, H = y.shape[-2:]
+        pad_w = (1 << (W - 1).bit_length()) - W
+        pad_h = (1 << (H - 1).bit_length()) - H
+
+        y = F.pad(y, (0, pad_h, 0, pad_w), mode="constant", value=0)
         y = y.to(self.device)
         if x is not None:
+            x = F.pad(x, (0, pad_h, 0, pad_w), mode="constant", value=0)
             x = x.to(self.device)
 
+        # training
         state = {
             "y": y,
             "x": x, 
@@ -75,6 +85,9 @@ class Base(Denoiser):
         self.on_train_end(state)
 
         self.net.reset_parameters()
+
+        # unpadding
+        x_hat = x_hat[:, :, :W, :H]
 
         return x_hat
     
