@@ -156,8 +156,6 @@ cython_debug/
 
 .vscode
 
-thesis/
-build/
 experiments/
 output/
 wandb/
@@ -167,3 +165,7 @@ test.ipynb
 CelebA/
 LibriSpeech/
 FORGE/
+SISSLE/
+
+# latex
+build/

@@ -1,0 +1,29 @@
+\documentclass[]{thesis}
+
+\begin{document}
+    \pagenumbering{gobble}
+    \include{chapters/titlepage}
+    \cleardoublepage
+
+    \include{chapters/00-abstract}
+    \cleardoublepage
+
+    \tableofcontents
+    \cleardoublepage
+
+    \pagenumbering{arabic}
+    \include{chapters/01-introduction}
+    \include{chapters/02-background}
+    \include{chapters/03-related-work}
+    \include{chapters/04-method}
+    \include{chapters/05-implementational-details}
+    \include{chapters/06-results}
+    \include{chapters/07-discussion}
+    \include{chapters/08-conclusion}
+
+    \addcontentsline{toc}{chapter}{\bibname}
+    \printbibliography
+
+    \appendix
+    \include{chapters/09-appendix}
+\end{document}
