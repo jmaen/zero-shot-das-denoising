@@ -1,14 +1,54 @@
-\chapter{Background} \label{ch:background}
+\chapter{Background}\label{ch:background}
+
+This chapter provides the necessary background for understanding unsupervised denoising.
+We begin by defining the general denoising problem and discussing its inherent challenges.
+We then present key deep learning concepts and techniques that are used in the context of denoising.
+Finally, we introduce Digital Acoustic Sensing (DAS) as a real-world application and highlight the unique difficulties 
+it presents.
 
 \section{Denoising}
 
+In general, denoising refers to the process of recovering a clean signal from a noisy observation.
+Formally, it can be described by the inverse problem 
+\begin{equation}
+    y = x + n
+\end{equation}
+where $y$ is the noisy observation, $x$ is the underlying clean signal and $n$ represents some form of noise, for
+example Gaussian noise $n \sim \normal$.
+Denoising is an inherently ill-posed problem, as the noise and, in many cases, the noise distribution are unknown.
+Therefore, additional assumptions about the solution are essential for solving the denoising problem. 
+This process is known as regularization and typically involves imposing certain constraints on the solution space to 
+favor more natural solutions~\cite{XXX}. 
+The choice of regularizer depends on the specific problem setting and the type of data involved.
+
 \section{Deep Learning}
 
-Lorem ipsum dolor sit amet, consectetur adipiscing elitLorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+Deep learning is a subfield of machine learning that utilizes deep neural networks to learn complex patterns from data. 
+Over the past decade, deep learning has established itself as the state-of-the-art approach for a wide range of problems
+across various different fields. 
+In its most basic form, a neural network consists of neurons organized in layers, where each neuron applies a linear 
+transformation followed by a non-linear activation function.
+
+The output of a neuron is given by
+\begin{equation}
+    o = \varphi(\mathbf{w}^T\mathbf{x} + b)
+\end{equation}
+for an input $\mathbf{x}$, a weight vector $\mathbf{w}$, a bias term $b$ and an activation function $\varphi$. 
+The activation function is needed in order to avoid the network collapsing into a single linear transformation. 
+The output of each layer is then passed as input to the next layer. 
+Therefore, a neural network can be described as a function $f_{\theta}: \mathcal{X} \rightarrow \mathcal{Y}$ 
+parameterized by $\theta$, where $\theta$ represents the weights and biases across all layers~\cite{DeepLearning}.
+
+In order to optimize these parameters, a loss function $\mathcal{L}: \mathcal{Y} \times \mathcal{Y} \rightarrow \R$ is 
+defined, which measures the difference between the predicted output and the target value. 
+Now, the gradient of the loss function with respect to the parameters, 
+$\nabla_\theta \mathcal{L} = \frac{\partial \mathcal{L}}{\partial \theta}$, represents the direction of steepest ascent.
+Therefore, by moving the parameters in the opposite direction of the gradient, the loss function can be minimized.
+Backpropagation~\cite{Backpropagation} is used to efficiently compute the gradient by making use of the
+chain rule, enabling fast optimization.
+
+While traditionally neural networks only consisted of a few layers and required hand-crafted features to work 
+effectively, advances in computing power allow modern architectures to automate feature extraction by using additional 
+layers, hence the term \textit{deep} neural network.
+
+\section{Digital Acoustic Sensing}
