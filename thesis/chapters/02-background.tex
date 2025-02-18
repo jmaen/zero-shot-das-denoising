@@ -1,6 +1,6 @@
 \chapter{Background}\label{ch:background}
 
-This chapter provides the necessary background for understanding unsupervised denoising.
+This chapter provides the necessary background for understanding unsupervised denoising. % TODO rephrase
 We begin by defining the general denoising problem and discussing its inherent challenges.
 We then present key deep learning concepts and techniques that are used in the context of denoising.
 Finally, we introduce Digital Acoustic Sensing (DAS) as a real-world application and highlight the unique difficulties 
@@ -72,7 +72,7 @@ layers.
 CNNs provide two main advantages: First, since the weights are shared, convolutional layers drastically reduce the
 number of parameters compared to fully-connected layers. 
 Second, convolutions are translationally equivariant, meaning that local patterns in the input can be recognized 
-regardless of their position, which makes CNNs very suitable for image data.~\cite{DeepLearning}
+regardless of their position, which makes CNNs very suitable for image data~\cite{DeepLearning}.
 
 \subsection{Normalization}
 
@@ -176,5 +176,15 @@ A selection of them is visualized in Figure~\ref{fig:normalization}.
 
 
 \subsection{Attention Mechanisms}
+
+In neural networks, some input features are typically more important than others.
+An attention mechanism helps the network to focus on (\textit{attend to}) the most relevant parts of the
+input, rather than processing all inputs equally.
+This works by dynamically reweighting the features based on their importance~\cite{Attention}.
+While attention is often associated with natural language processing (NLP), especially since the introduction of the
+Transformer architecture~\cite{Transformer} where it is the underlying key principle, it also has applications beyond
+NLP.\@
+In computer vision, for example, it can help CNNs by reweighting feature channels~\cite{SqueezeExcite} or
+highlighting important spatial regions.
 
 \section{Digital Acoustic Sensing}

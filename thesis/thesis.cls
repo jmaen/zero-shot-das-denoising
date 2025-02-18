@@ -28,7 +28,8 @@
 \newcommand{\etal}{et al.\ }
 
 % Math shorthands
-\newcommand{\normal}{\mathcal{N}(0,\sigma^2\mathbf{I})}
+\newcommand{\normal}{\mathcal{N}(0,\sigma^2)}
+\newcommand{\mnormal}{\mathcal{N}(\mathbf{0},\sigma^2\mathbf{I})}
 
 \newcommand{\R}{\mathbb{R}}
 % \newcommand{\C}{\mathbb{C}}
