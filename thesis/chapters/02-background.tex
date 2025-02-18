@@ -25,17 +25,19 @@ The choice of regularizer depends on the specific problem setting and the type o
 
 Deep learning is a subfield of machine learning that utilizes deep neural networks to learn complex patterns from data. 
 Over the past decade, deep learning has established itself as the state-of-the-art approach for a wide range of problems
-across various different fields. 
-In its most basic form, a neural network consists of neurons organized in layers, where each neuron applies a linear 
-transformation followed by a non-linear activation function.
+across various different fields.
 
-The output of a neuron is given by
+\subsection{Deep Neural Networks}
+
+In its most basic form, a (fully-connected) neural network consists of neurons organized in layers, where each neuron
+applies a linear transformation followed by a non-linear activation function.
+The output of a single neuron is given by
 \begin{equation}
-    o = \varphi(\mathbf{w}^T\mathbf{x} + b)
+    y = \varphi(\mathbf{w}^T\mathbf{x} + b)
 \end{equation}
-for an input $\mathbf{x}$, a weight vector $\mathbf{w}$, a bias term $b$ and an activation function $\varphi$. 
+for an input $\mathbf{x}$, a weight vector $\mathbf{w}$, a bias value $b$ and an activation function $\varphi$. 
 The activation function is needed in order to avoid the network collapsing into a single linear transformation. 
-The output of each layer is then passed as input to the next layer. 
+The outputs of each layer are then passed as inputs to the next layer. 
 Therefore, a neural network can be described as a function $f_{\theta}: \mathcal{X} \rightarrow \mathcal{Y}$ 
 parameterized by $\theta$, where $\theta$ represents the weights and biases across all layers~\cite{DeepLearning}.
 
@@ -44,11 +46,135 @@ defined, which measures the difference between the predicted output and the targ
 Now, the gradient of the loss function with respect to the parameters, 
 $\nabla_\theta \mathcal{L} = \frac{\partial \mathcal{L}}{\partial \theta}$, represents the direction of steepest ascent.
 Therefore, by moving the parameters in the opposite direction of the gradient, the loss function can be minimized.
+Typically, the gradient is not calculated for a single data point or for the whole dataset, but instead for a
+small subset of the dataset, which is why this approach is referred to as (mini-batch) gradient descent.
 Backpropagation~\cite{Backpropagation} is used to efficiently compute the gradient by making use of the
 chain rule, enabling fast optimization.
 
 While traditionally neural networks only consisted of a few layers and required hand-crafted features to work 
 effectively, advances in computing power allow modern architectures to automate feature extraction by using additional 
 layers, hence the term \textit{deep} neural network.
+
+\subsection{Convolutional Neural Networks}
+
+Convolutional neural networks (CNNs)~\cite{CNN} are a specific type of neural network that learns features using
+kernels.
+Prior to the rise of deep learning, such kernels were designed manually for various computer vision tasks, for example
+the Sobel kernel~\cite{Sobel} used for edge detection.
+In CNNs, these kernels are automatically learned from data. In contrast to fully-connected layers, the output of a
+convolutional layer is obtained by convolution with one or multiple kernels, replacing the matrix multiplication.
+For a kernel $\mathbf{K} \in \R^{n \times m}$, the convolution is defined as
+\begin{equation}
+    (\mathbf{X} \ast \mathbf{K})_{i,j} = \sum_{n}\sum_{m} X_{i+n,j+m} \cdot K_{n,m}.
+\end{equation}
+The output of the convolution is then passed through a non-linear activation function, just like in fully-connected
+layers.
+CNNs provide two main advantages: First, since the weights are shared, convolutional layers drastically reduce the
+number of parameters compared to fully-connected layers. 
+Second, convolutions are translationally equivariant, meaning that local patterns in the input can be recognized 
+regardless of their position, which makes CNNs very suitable for image data.~\cite{DeepLearning}
+
+\subsection{Normalization}
+
+\newcommand{\cube}[2]{
+    % background
+    \fill[gray!10, opacity=0.5] (0,0,\a) -- (\a,0,\a) -- (\a,\a,\a) -- (0,\a,\a) -- cycle;
+    \fill[gray!10, opacity=0.5] (0,0,0) -- (\a,0,0) -- (\a,0,\a) -- (0,0,\a) -- cycle;
+    \fill[gray!10, opacity=0.5] (0,0,0) -- (0,\a,0) -- (0,\a,\a) -- (0,0,\a) -- cycle;
+
+    % edges
+    \draw[thick] (0,#1,0) -- (0,0,0) -- (#1,0,0);
+    \draw[thick] (0,#1,0) -- (0,#1,#1);
+    \draw[thick] (0,0,0) -- (0,0,#1);
+    \draw[thick] (#1,0,0) -- (#1,0,#1);
+    \draw[thick] (0,#1,#1) -- (0,0,#1) -- (#1,0,#1) -- (#1,#1,#1) -- cycle;
+
+    % grid
+    \foreach \i in {1,2,...,#1} {
+        \draw[very thin] (0,\i,0) -- (0,\i,#1);
+        \draw[very thin] (0,0,\i) -- (0,#1,\i);
+
+        \draw[very thin] (\i,0,0) -- (\i,0,#1);
+        \draw[very thin] (0,0,\i) -- (#1,0,\i);
+
+        \draw[very thin] (\i,0,#1) -- (\i,#1,#1);
+        \draw[very thin] (0,\i,#1) -- (#1,\i,#1);
+    }
+
+    % labels
+    \node[rotate=90] at (0,#1,#1/2) [above] {$H,W$};
+    \node at (0,#1/2,0) [below left] {$C$};
+    \node at (#1/2,0,0) [below right] {$N$};
+
+    % name
+    \node at (#1,#1,#1+1) {#2};
+}
+
+\begin{figure}
+    \centering
+
+    \tdplotsetmaincoords{60}{-45}
+    \def\a{4}
+    \begin{tikzpicture}[tdplot_main_coords, scale=0.5]
+        \fill[Maroon] (0,0,0) -- (\a,0,0) -- (\a,0,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon] (0,0,0) -- (0,1,0) -- (0,1,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon] (0,0,\a) -- (\a,0,\a) -- (\a,1,\a) -- (0,1,\a) -- cycle;
+
+        \cube{\a}{Batch Norm}
+    \end{tikzpicture}
+    \hfill
+    \begin{tikzpicture}[tdplot_main_coords, scale=0.5]
+        \fill[Maroon] (0,0,0) -- (0,\a,0) -- (0,\a,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon] (0,0,0) -- (1,0,0) -- (1,0,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon] (0,0,\a) -- (0,\a,\a) -- (1,\a,\a) -- (1,0,\a) -- cycle;
+
+        \cube{\a}{Layer Norm}
+    \end{tikzpicture}
+    \hfill
+    \begin{tikzpicture}[tdplot_main_coords, scale=0.5]
+        \fill[Maroon] (0,0,0) -- (0,1,0) -- (0,1,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon] (0,0,0) -- (1,0,0) -- (1,0,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon] (0,0,\a) -- (0,1,\a) -- (1,1,\a) -- (1,0,\a) -- cycle;
+
+        \cube{\a}{Instance Norm}
+    \end{tikzpicture}
+    \hfill
+    \begin{tikzpicture}[tdplot_main_coords, scale=0.5]
+        \fill[Maroon] (0,0,0) -- (0,\a/2,0) -- (0,\a/2,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon] (0,0,0) -- (1,0,0) -- (1,0,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon] (0,0,\a) -- (0,\a/2,\a) -- (1,\a/2,\a) -- (1,0,\a) -- cycle;
+
+        \cube{\a}{Group Norm}
+    \end{tikzpicture}
+
+    \caption{
+        Different normalization techniques. $N$ is the batch dimension, $C$ is the channel dimension and $H$ and $W$ are
+        the spatial dimensions of a 4D tensor. The input is normalized across the dimensions highlighted in red.
+        Figure adapted from~\cite{GroupNorm}.
+    }
+    \label{fig:normalization}
+\end{figure}
+
+During the training process, the inputs of each layer change with each iteration as the parameters are optimized.
+That slows down the training because now each layer has to adapt to the new distribution of its inputs. This process is
+often referred to as internal covariate shift.
+To counteract this issue, Ioffe \etal proposed Batch Normalization (BN)~\cite{BatchNorm}.
+The idea behind BN is to normalize the inputs across the whole mini-batch and their spatial dimensions.
+The normalized input for a channel $i$ is given by
+\begin{equation}
+    \hat{x}^{(i)} = \frac{x^{(i)} - \mu^{(i)}}{\sigma^{(i)}},
+\end{equation} 
+where $\mu^{(i)}$ and $\sigma^{(i)}$ are the per-channel mean and standard deviation of the mini-batch, respectively.  
+In order to allow the model learn the identity if that is the optimal transformation, two additional learnable
+parameters, $\gamma$ and $\beta$, are introduced. The output of the BN layer is then defined as
+\begin{equation}
+    y^{(i)} = \gamma^{(i)}\hat{x}^{(i)} + \beta^{(i)}.
+\end{equation}
+While BN is widely used, there exist various similar normalization techniques~\cite{LayerNorm, InstanceNorm, GroupNorm}
+mainly differing in the dimensions across which they are applied.
+A selection of them is visualized in Figure~\ref{fig:normalization}.
+
+
+\subsection{Attention Mechanisms}
 
 \section{Digital Acoustic Sensing}

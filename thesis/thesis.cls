@@ -12,14 +12,20 @@
 
 % Useful packages
 \usepackage{graphicx}
-\usepackage{color}
+\usepackage[dvipsnames]{xcolor}
 \usepackage{amsmath,amssymb}
 \usepackage[hidelinks]{hyperref}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{tikz-3dplot}
 
 % Bibliography
 \usepackage{biblatex}
 \usepackage{csquotes}
 \addbibresource{references.bib}
+
+% Abbreviations
+\newcommand{\etal}{et al.\ }
 
 % Math shorthands
 \newcommand{\normal}{\mathcal{N}(0,\sigma^2\mathbf{I})}
