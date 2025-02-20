@@ -1,10 +1,10 @@
 \chapter{Background}\label{ch:background}
 
-This chapter provides the necessary background for understanding unsupervised denoising. % TODO rephrase
+This chapter provides the necessary background for the denoising methods explored in this work.
 We begin by defining the general denoising problem and discussing its inherent challenges.
-We then present key deep learning concepts and techniques that are used in the context of denoising.
-Finally, we introduce Digital Acoustic Sensing (DAS) as a real-world application and highlight the unique difficulties 
+We then introduce distributed acoustic sensing (DAS) as a real-world application and highlight the unique difficulties 
 it presents.
+Finally, we present key deep learning concepts and techniques that are used in the context of denoising.
 
 \section{Denoising}
 
@@ -20,6 +20,71 @@ Therefore, additional assumptions about the solution are essential for solving t
 This process is known as regularization and typically involves imposing certain constraints on the solution space to 
 favor more natural solutions~\cite{XXX}. 
 The choice of regularizer depends on the specific problem setting and the type of data involved.
+
+\section{Distributed Acoustic Sensing}
+
+Distributed acoustic sensing (DAS, or distributed \textit{vibration} sensing, DVS)~\cite{DAS} is an innovative 
+technology for high-resolution vibration measurements over large distances by utilizing fiber optic cables as sensor
+arrays.
+It is based on a phenomenon called Rayleigh scattering, which occurs in optical fibers.
+When a short laser pulse is sent through the fiber by a DAS interrogator unit, a fraction of the light is scattered back
+due to small variations or imperfections in the fiber.
+Vibrations along the cable caused by external influences, \eg seismic events, strain the fiber, which in turn causes
+phase shifts in the backscattered light.
+\begin{wrapfigure}{r}{0.5\textwidth}
+    \begin{tikzpicture}
+        \filldraw[color=gray!10,draw=black,thick] (0,0) -- (1,0) -- (1,5) -- (0,5) -- cycle;        \foreach \i in {0,1,2,3,4} {
+            \filldraw[color=Maroon!70] (0.5,\i+0.5) circle (0.2); 
+        }
+
+        \draw[decorate,decoration={brace,amplitude=5pt}, thick] (-0.2,1.5) -- (-0.2,3.5);
+        \draw[decorate,decoration={brace,amplitude=5pt}, thick] (1.2,3.5) -- (1.2,2.5);
+
+        \node at (-0.4,2.5) [left] {gauge length};
+        \node at (1.4,3) [right] {channel spacing};
+    \end{tikzpicture}
+
+    \caption{
+        Gauge length and channel spacing. Red dots represent the individual channels along the fiber.
+        Figure adapted from~\cite{GaugeLength}.
+    }
+    \label{fig:gauge-length}
+\end{wrapfigure}
+These shifts are detected by the interrogator and, since the travel time of the light is known, can be used to
+accurately locate the vibrations along the cable~\cite{DAS-N2N}.
+In order to extract meaningful measurements, strain is analyzed over sections of the fiber, rather than at individual
+points.
+The length of these sections is called the \textit{gauge length}, while another parameter, the \textit{channel spacing},
+determines how much this section is moved for each measurement, or channel, along the cable~\cite{GaugeLength}.
+In practice, each channel corresponds to a virtual sensor capturing the average strain within its gauge length.
+Typically, the gauge length is selected to be bigger than the channel spacing, meaning that the measurement sections
+of neighboring channels overlap, as visualized in Figure~\ref{fig:gauge-length}.
+This concept of virtual sensors leads to high cost-effectiveness and, paired with the high sample rates enabled by the
+optical approach, allows measurements with significantly higher spatial and temporal resolution compared to
+conventional seismographs.
+
+\begin{figure}[b!]
+    \includegraphics[width=\textwidth]{img/fig_2.2.png}
+    \caption{
+        Types of noise in different DAS setups.
+        Both measurements capture seismic events; however, the SISSLE data mainly suffers from traffic noise
+        (the diagonal lines).
+        In contrast, erratic and common mode noise (the horizontal and vertical lines,
+        respectively) are most prominent in the FORGE data.
+    }
+    \label{fig:das-noise}
+\end{figure}
+
+Despite these advantages, DAS systems often suffer from much lower signal quality than conventional seismographs,
+as they are more affected by various sources of noise.
+These can be divided into environmental noise and optical noise.
+Environmental noise includes natural phenomena such as winds or ocean waves, but also vibrations caused by vehicular and
+pedestrian traffic.
+Optical noise originates from various interactions between the light and the fiber.
+It includes high-amplitude erratic noise and common mode noise~\cite{IDF}.\\
+The actual noise characteristics of DAS data not only depend on the environment, but also the measurement parameters
+such as channel spacing and sample rate, as visualized in Figure~\ref{fig:das-noise} for data from the SISSLE experiment
+near Haast, New Zealand~\cite{SISSLE} and the FORGE site in Utah~\cite{FORGE}.
 
 \section{Deep Learning}
 
@@ -69,8 +134,8 @@ For a kernel $\mathbf{K} \in \R^{n \times m}$, the convolution is defined as
 \end{equation}
 The output of the convolution is then passed through a non-linear activation function, just like in fully-connected
 layers.
-CNNs provide two main advantages: First, since the weights are shared, convolutional layers drastically reduce the
-number of parameters compared to fully-connected layers. 
+CNNs provide two main advantages: First, since the weights are shared across the spatial dimensions, convolutional
+layers drastically reduce the number of parameters compared to fully-connected layers. 
 Second, convolutions are translationally equivariant, meaning that local patterns in the input can be recognized 
 regardless of their position, which makes CNNs very suitable for image data~\cite{DeepLearning}.
 
@@ -165,7 +230,7 @@ The normalized input for a channel $i$ is given by
     \hat{x}^{(i)} = \frac{x^{(i)} - \mu^{(i)}}{\sigma^{(i)}},
 \end{equation} 
 where $\mu^{(i)}$ and $\sigma^{(i)}$ are the per-channel mean and standard deviation of the mini-batch, respectively.  
-In order to allow the model learn the identity if that is the optimal transformation, two additional learnable
+In order to allow the model to learn the identity if that were the optimal transformation, two additional learnable
 parameters, $\gamma$ and $\beta$, are introduced. The output of the BN layer is then defined as
 \begin{equation}
     y^{(i)} = \gamma^{(i)}\hat{x}^{(i)} + \beta^{(i)}.
@@ -186,5 +251,3 @@ Transformer architecture~\cite{Transformer} where it is the underlying key princ
 NLP.\@
 In computer vision, for example, it can help CNNs by reweighting feature channels~\cite{SqueezeExcite} or
 highlighting important spatial regions.
-
-\section{Digital Acoustic Sensing}

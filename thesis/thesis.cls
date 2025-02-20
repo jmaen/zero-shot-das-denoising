@@ -1,5 +1,6 @@
 \ProvidesClass{thesis}[]
 
+% Layout
 \LoadClass[a4paper,11pt,twoside,english]{book}
 \usepackage[a4paper,left=3cm,right=3cm,bottom=3cm,top=3cm]{geometry}
 \renewcommand{\baselinestretch}{1.25}
@@ -7,32 +8,36 @@
 \usepackage{emptypage}
 \setlength\parindent{0pt}
 
+% Base packages
 \usepackage[utf8]{inputenc}
 \usepackage[english]{babel}
-
-% Useful packages
-\usepackage{graphicx}
 \usepackage[dvipsnames]{xcolor}
-\usepackage{amsmath,amssymb}
 \usepackage[hidelinks]{hyperref}
+\usepackage{amsmath,amssymb}
+
+% Figures
+\usepackage{wrapfig}
+\usepackage{graphicx}
+\usepackage[labelfont=bf]{caption}
 \usepackage{tikz}
-\usepackage{pgfplots}
 \usepackage{tikz-3dplot}
+\usetikzlibrary{decorations.pathreplacing}
+% \usepackage{pgfplots}
 
 % Bibliography
-\usepackage{biblatex}
 \usepackage{csquotes}
+\usepackage{biblatex}
 \addbibresource{references.bib}
 
 % Abbreviations
 \newcommand{\etal}{et al.\ }
+\newcommand{\eg}{e.g.\ }
 
 % Math shorthands
-\newcommand{\normal}{\mathcal{N}(0,\sigma^2)}
-\newcommand{\mnormal}{\mathcal{N}(\mathbf{0},\sigma^2\mathbf{I})}
-
 \newcommand{\R}{\mathbb{R}}
-% \newcommand{\C}{\mathbb{C}}
+\newcommand{\C}{\mathbb{C}}
+
+\newcommand{\normal}{\mathcal{N}(\mathbf{0},\sigma^2\mathbf{I})}
 
 % \newcommand{\E}[2]{\mathbb{E}_{#1}\left[#2\right]}
 % \newcommand{\cnormal}[1][z]{\mathcal{N}(#1\mid 0,\mathbf{I})}
