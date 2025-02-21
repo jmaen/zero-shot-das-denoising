@@ -29,6 +29,8 @@ class Logger():
         print(f"Running: {self.name}")
 
         if self.mode == "local":
+            self.out_dir = options["out_dir"]
+
             self.data = {}
             self.markers = []
             self.step = 0
@@ -148,12 +150,9 @@ class Logger():
             height, width, _ = frames[0].shape
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
 
-            video_writer = cv2.VideoWriter(f"output/das/{self.name}_{key}.mp4", fourcc, 60, (width, height))
+            video_writer = cv2.VideoWriter(f"{self.out_dir}/{self.name}_{key}.mp4", fourcc, 60, (width, height))
 
             for frame in frames:
-                if seismic:
-                    frame = (plt.cm.seismic(frame[:, :, 0])[:, :, :3] * 255).astype(np.uint8)
-
                 video_writer.write(cv2.cvtColor(frame, cv2.COLOR_RGB2BGR))
 
             video_writer.release()
@@ -186,8 +185,9 @@ class Logger():
         for tensor in tensors:
             tensor = tensor.squeeze()
             if seismic:
-                vmin, vmax = -20, 20
-                tensor = (tensor - vmin) / (vmax - vmin) 
+                vmin, vmax = -2, 2
+                tensor = (tensor - vmin) / (vmax - vmin)
+                tensor = tensor.clamp(vmin, vmax)
             else:
                 tensor = tensor / 2 + 0.5
                 tensor = tensor.clamp(0, 1)
@@ -197,6 +197,8 @@ class Logger():
                 tensor = tensor[:1].expand((3, -1, -1))
             frame = (tensor.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
             resized_frame = self.resize_frame(frame, target_height)
+            if seismic:
+                resized_frame = (plt.cm.seismic(resized_frame[:, :, 0])[:, :, :3] * 255).astype(np.uint8)
             resized_frames.append(resized_frame)
         
         separator = np.full((target_height, separator_width, 3), 255, dtype=np.uint8)

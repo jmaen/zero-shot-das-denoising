@@ -4,6 +4,8 @@ import torch
 
 class Schedule:
     def __init__(self, min: float = 0, max: float = 1):
+        self.min = min
+        self.max = max
         self.factor = max - min
         self.offset = min
 
@@ -19,7 +21,7 @@ class Cos(Schedule):
         super().__init__(min, max)
 
     def __str__(self):
-        return "Cos"
+        return f"Cos ({self.min}, {self.max})"
     
     def __call__(self, t):
         x = math.cos((1 - t) * math.pi/2)**2
@@ -31,7 +33,7 @@ class Linear(Schedule):
         super().__init__(min, max)
 
     def __str__(self):
-        return "Linear"
+        return f"Linear ({self.min}, {self.max})"
     
     def __call__(self, t):
         return self.transform(t)
@@ -47,7 +49,7 @@ class DDPM(Schedule):
         self.T = T
 
     def __str__(self):
-        return "DDPM"
+        return f"DDPM ({self.min}, {self.max})"
     
     def __call__(self, t):
         # FIXME: round to avoid numerical issues

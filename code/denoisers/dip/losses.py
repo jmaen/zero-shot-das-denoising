@@ -21,7 +21,10 @@ class Composed(Loss):
         alpha = self.alpha
         if isinstance(alpha, Schedule):
             alpha = self.alpha(t)
-        return self.loss1(x, y, z, t) + alpha*self.loss2(x, y, z, t)
+        l1 = self.loss1(x, y, z, t)
+        l2 = self.loss2(x, y, z, t)
+        # print(l1.item(), l2.item())
+        return l1 + alpha*l2
     
     def with_alpha(self, alpha):
         return Composed(self.loss1, self.loss2, alpha)
@@ -32,7 +35,9 @@ class MSE(Loss):
         return "MSE"
     
     def __call__(self, x, y, z=None, t=None):
-        return mse_loss(x, y)
+        l = mse_loss(x,y)
+        # print(l.item())
+        return l
 
 
 class NMSE(Loss):
@@ -69,6 +74,7 @@ class AE(Loss):
         return mse_loss(x, z)
 
 
+# TODO try only 1 axis for DAS
 class TV(Loss):
     def __str__(self):
         return "TV"

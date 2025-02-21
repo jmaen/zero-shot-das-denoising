@@ -130,7 +130,7 @@ class Base(Denoiser):
                 result = metric(state["x_hat"], state["x"]).item()
                 state["metrics"][key] = result
 
-        if self.log_output:
+        if self.log_output and state["epoch"] % 10 == 0:
             output = [state["y"], state["x_hat"]]
             if state["z"] is not None:
                 output.insert(1, state["z"])
