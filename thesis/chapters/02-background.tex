@@ -14,8 +14,8 @@ Formally, it can be described by the inverse problem
     y = x + n
 \end{equation}
 where $y$ is the noisy observation, $x$ is the underlying clean signal and $n$ represents some form of noise, for
-example Gaussian noise $n \sim \normal$.
-Denoising is an inherently ill-posed problem, as the noise and, in many cases, the noise distribution are unknown.
+example Gaussian noise~$n \sim \normal$.
+Since both the noise and its distribution are often unknown, denoising is an inherently ill-posed problem.
 Therefore, additional assumptions about the solution are essential for solving the denoising problem. 
 This process is known as regularization and typically involves imposing certain constraints on the solution space to 
 favor more natural solutions~\cite{XXX}. 
@@ -23,21 +23,22 @@ The choice of regularizer depends on the specific problem setting and the type o
 
 \section{Distributed Acoustic Sensing}
 
-Distributed acoustic sensing (DAS, or distributed \textit{vibration} sensing, DVS)~\cite{DAS} is an innovative 
+Distributed acoustic sensing (DAS), also known as distributed vibration sensing (DVS)~\cite{DAS}, is an innovative 
 technology for high-resolution vibration measurements over large distances by utilizing fiber optic cables as sensor
 arrays.
-It is based on a phenomenon called Rayleigh scattering, which occurs in optical fibers.
 When a short laser pulse is sent through the fiber by a DAS interrogator unit, a fraction of the light is scattered back
 due to small variations or imperfections in the fiber.
+This phenomenon is referred to as Rayleigh scattering.
 Vibrations along the cable caused by external influences, \eg seismic events, strain the fiber, which in turn causes
 phase shifts in the backscattered light.
-\begin{wrapfigure}{r}{0.5\textwidth}
-    \begin{tikzpicture}
+\begin{wrapfigure}{r}{0.48\textwidth}
+    \centering
+    \begin{tikzpicture}[scale=0.9]
         \filldraw[color=gray!10,draw=black,thick] (0,0) -- (1,0) -- (1,5) -- (0,5) -- cycle;        \foreach \i in {0,1,2,3,4} {
             \filldraw[color=Maroon!70] (0.5,\i+0.5) circle (0.2); 
         }
 
-        \draw[decorate,decoration={brace,amplitude=5pt}, thick] (-0.2,1.5) -- (-0.2,3.5);
+        \draw[decorate,decoration={brace,amplitude=5pt}, thick] (-0.2,1) -- (-0.2,4);
         \draw[decorate,decoration={brace,amplitude=5pt}, thick] (1.2,3.5) -- (1.2,2.5);
 
         \node at (-0.4,2.5) [left] {gauge length};
@@ -51,7 +52,7 @@ phase shifts in the backscattered light.
     \label{fig:gauge-length}
 \end{wrapfigure}
 These shifts are detected by the interrogator and, since the travel time of the light is known, can be used to
-accurately locate the vibrations along the cable~\cite{DAS-N2N}.
+accurately locate the strain along the cable~\cite{DAS-N2N}.
 In order to extract meaningful measurements, strain is analyzed over sections of the fiber, rather than at individual
 points.
 The length of these sections is called the \textit{gauge length}, while another parameter, the \textit{channel spacing},
@@ -76,7 +77,7 @@ conventional seismographs.
 \end{figure}
 
 Despite these advantages, DAS systems often suffer from much lower signal quality than conventional seismographs,
-as they are more affected by various sources of noise.
+as they are more sensitive to various sources of noise.
 These can be divided into environmental noise and optical noise.
 Environmental noise includes natural phenomena such as winds or ocean waves, but also vibrations caused by vehicular and
 pedestrian traffic.
@@ -90,23 +91,25 @@ near Haast, New Zealand~\cite{SISSLE} and the FORGE site in Utah~\cite{FORGE}.
 
 Deep learning is a subfield of machine learning that utilizes deep neural networks to learn complex patterns from data. 
 Over the past decade, deep learning has established itself as the state-of-the-art approach for a wide range of problems
-across various different fields.
+across various different fields. % TODO such as ...
 
 \subsection{Deep Neural Networks}
 
-In its most basic form, a (fully-connected) neural network consists of neurons organized in layers, where each neuron
+In its most basic form, a neural network consists of neurons organized in layers, where each neuron
 applies a linear transformation followed by a non-linear activation function.
 The output of a single neuron is given by
 \begin{equation}
     y = \varphi(\mathbf{w}^T\mathbf{x} + b)
 \end{equation}
-for an input $\mathbf{x}$, a weight vector $\mathbf{w}$, a bias value $b$ and an activation function $\varphi$. 
-The activation function is needed in order to avoid the network collapsing into a single linear transformation. 
-The outputs of each layer are then passed as inputs to the next layer. 
-Therefore, a neural network can be described as a function $f_{\theta}: \mathcal{X} \rightarrow \mathcal{Y}$ 
+for an input~$\mathbf{x} \in \R^n$, a weight vector~$\mathbf{w} \in \R^n$, a bias~$b \in \R$ and an activation
+function~$\varphi$.
+The outputs of each layer are then passed as inputs to the next layer, which is why this architecture is known as a
+fully-connected neural network. 
+The activation functions are needed in order to avoid the network collapsing into a single linear transformation. 
+Therefore, a neural network can be described as a function~$f_{\theta}: \mathcal{X} \rightarrow \mathcal{Y}$ 
 parameterized by $\theta$, where $\theta$ represents the weights and biases across all layers~\cite{DeepLearning}.
 
-In order to optimize these parameters, a loss function $\mathcal{L}: \mathcal{Y} \times \mathcal{Y} \rightarrow \R$ is 
+In order to optimize these parameters, a loss function~$\mathcal{L}: \mathcal{Y} \times \mathcal{Y} \rightarrow \R$ is 
 defined, which measures the difference between the predicted output and the target value. 
 Now, the gradient of the loss function with respect to the parameters, 
 $\nabla_\theta \mathcal{L} = \frac{\partial \mathcal{L}}{\partial \theta}$, represents the direction of steepest ascent.
@@ -130,7 +133,7 @@ In CNNs, these kernels are automatically learned from data. In contrast to fully
 convolutional layer is obtained by convolution with one or multiple kernels, replacing the matrix multiplication.
 For a kernel $\mathbf{K} \in \R^{n \times m}$, the convolution is defined as
 \begin{equation}
-    (\mathbf{X} \ast \mathbf{K})_{i,j} = \sum_{n}\sum_{m} X_{i+n,j+m} \cdot K_{n,m}.
+    (\mathbf{X} \ast \mathbf{K})_{i,j} = \sum_{k=1}^{n}\sum_{l=1}^{m} X_{i+n,j+m} \cdot K_{k,l}.
 \end{equation}
 The output of the convolution is then passed through a non-linear activation function, just like in fully-connected
 layers.
@@ -235,6 +238,8 @@ parameters, $\gamma$ and $\beta$, are introduced. The output of the BN layer is 
 \begin{equation}
     y^{(i)} = \gamma^{(i)}\hat{x}^{(i)} + \beta^{(i)}.
 \end{equation}
+Since there are no batch statistics available at inference time, BN keeps track of the running mean and variance during
+training and uses these values for normalization.
 While BN is widely used, there exist various similar normalization techniques~\cite{LayerNorm, InstanceNorm, GroupNorm}
 mainly differing in the dimensions across which they are applied.
 A selection of them is visualized in Figure~\ref{fig:normalization}.
@@ -251,3 +256,7 @@ Transformer architecture~\cite{Transformer} where it is the underlying key princ
 NLP.\@
 In computer vision, for example, it can help CNNs by reweighting feature channels~\cite{SqueezeExcite} or
 highlighting important spatial regions.
+% TODO add details
+
+\section{Fourier Transform}
+% TODO add fourier?

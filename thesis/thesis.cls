@@ -7,6 +7,7 @@
 \pagestyle{plain}
 \usepackage{emptypage}
 \setlength\parindent{0pt}
+\setlength{\columnsep}{20pt}
 
 % Base packages
 \usepackage[utf8]{inputenc}
