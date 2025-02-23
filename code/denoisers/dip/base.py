@@ -26,7 +26,7 @@ class Base(Denoiser):
 
         self.early_stopping = early_stopping
         if self.early_stopping:
-            self.patience = 500
+            self.patience = 300
             self.window_size = 100
 
         self.logger = Logger()

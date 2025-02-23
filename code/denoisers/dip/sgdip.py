@@ -1,11 +1,12 @@
 import torch
 import torch.optim as optim
+import torch.nn.functional as F
 from tqdm import tqdm
 from .base import Base
 
 
 class SGDIP(Base):
-    def __init__(self, net, loss, early_stopping=False, lr=0.01, max_epochs=2000, k=3, ratio=0.5, **kwargs):
+    def __init__(self, net, loss, early_stopping=False, lr=0.01, max_epochs=2000, k=3, ratio=0.5, reference=None, **kwargs):
         super().__init__(net, loss, early_stopping, **kwargs)
 
         self.lr = lr
@@ -13,12 +14,23 @@ class SGDIP(Base):
 
         self.k = k
         self.ratio = ratio
+        self.reference = reference
 
     def __str__(self):
         return f"SGDIP{" - ES" if self.early_stopping else ""} (k={self.k}, r={self.ratio})"
     
     def optimize(self, y, state):
-        z = torch.randn_like(y, device=self.device, requires_grad=True)
+        if self.reference is not None:
+            z = self.reference.clone().detach()
+
+            W, H = z.shape[-2:]
+            pad_w = y.shape[-2] - W
+            pad_h = y.shape[-1] - H
+            z = F.pad(z, (0, pad_h, 0, pad_w), mode="constant", value=0)
+
+            z = z.to(self.device).requires_grad_(True)
+        else:
+            z = torch.randn_like(y, device=self.device, requires_grad=True)
 
         optimizer = optim.Adam(self.net.parameters(), lr=self.lr)
         optimizer2 = optim.Adam([z], lr=self.lr)

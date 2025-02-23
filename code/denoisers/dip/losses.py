@@ -1,6 +1,6 @@
 import torch
 from torch.nn.functional import mse_loss
-from .schedules import Schedule
+from .schedules import Schedule, Linear
 
 
 class Loss:
@@ -8,7 +8,7 @@ class Loss:
         raise NotImplementedError("Loss function must be implemented by subclass")
     
 
-class Composed(Loss):
+class Compose(Loss):
     def __init__(self, loss1: Loss, loss2: Loss, alpha: float | Schedule = 1):
         self.loss1 = loss1
         self.loss2 = loss2
@@ -21,13 +21,33 @@ class Composed(Loss):
         alpha = self.alpha
         if isinstance(alpha, Schedule):
             alpha = self.alpha(t)
+
         l1 = self.loss1(x, y, z, t)
         l2 = self.loss2(x, y, z, t)
-        # print(l1.item(), l2.item())
         return l1 + alpha*l2
     
     def with_alpha(self, alpha):
-        return Composed(self.loss1, self.loss2, alpha)
+        return Compose(self.loss1, self.loss2, alpha)
+
+
+class Interpolate(Loss):
+    def __init__(self, loss1: Loss, loss2: Loss, schedule: Schedule = Linear()):
+        self.loss1 = loss1
+        self.loss2 = loss2
+        self.schedule = schedule
+    
+    def __str__(self):
+        return f"{str(self.loss1)} ip {str(self.loss2)} (schedule={str(self.schedule)})"
+    
+    def __call__(self, x, y, z=None, t=None):
+        alpha = self.schedule(t)
+
+        l1 = self.loss1(x, y, z, t)
+        l2 = self.loss2(x, y, z, t)
+        return alpha*l1 + (1 - alpha)*l2
+    
+    def with_schedule(self, schedule):
+        return Interpolate(self.loss1, self.loss2, schedule)
 
 
 class MSE(Loss):
