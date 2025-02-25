@@ -59,11 +59,15 @@ class Base(Denoiser):
         W, H = y.shape[-2:]
         pad_w = (1 << (W - 1).bit_length()) - W
         pad_h = (1 << (H - 1).bit_length()) - H
+        pad_l = pad_h // 2
+        pad_r = pad_h - pad_l
+        pad_t = pad_w // 2
+        pad_b = pad_w - pad_t
 
-        y = F.pad(y, (0, pad_h, 0, pad_w), mode="constant", value=0)
+        y = F.pad(y, (pad_l, pad_r, pad_t, pad_b), mode="reflect")
         y = y.to(self.device)
         if x is not None:
-            x = F.pad(x, (0, pad_h, 0, pad_w), mode="constant", value=0)
+            x = F.pad(x, (pad_l, pad_r, pad_t, pad_b), mode="reflect")
             x = x.to(self.device)
 
         # training
@@ -87,7 +91,7 @@ class Base(Denoiser):
         self.net.reset_parameters()
 
         # unpadding
-        x_hat = x_hat[:, :, :W, :H]
+        x_hat = x_hat[:, :, pad_t:W+pad_t, pad_l:H+pad_l]
 
         return x_hat
     

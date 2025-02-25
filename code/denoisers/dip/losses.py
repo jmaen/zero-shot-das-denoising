@@ -55,10 +55,8 @@ class MSE(Loss):
         return "MSE"
     
     def __call__(self, x, y, z=None, t=None):
-        l = mse_loss(x,y)
-        # print(l.item())
-        return l
-
+        return mse_loss(x,y)
+    
 
 class NMSE(Loss):
     def __str__(self):

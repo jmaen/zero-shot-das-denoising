@@ -23,7 +23,12 @@ class DIP(Base):
             W, H = z.shape[-2:]
             pad_w = y.shape[-2] - W
             pad_h = y.shape[-1] - H
-            z = F.pad(z, (0, pad_h, 0, pad_w), mode="constant", value=0)
+            pad_l = pad_h // 2
+            pad_r = pad_h - pad_l
+            pad_t = pad_w // 2
+            pad_b = pad_w - pad_t
+
+            z = F.pad(z, (pad_l, pad_r, pad_t, pad_b), mode="reflect")
 
             z = z.to(self.device).requires_grad_(True)
         else:
