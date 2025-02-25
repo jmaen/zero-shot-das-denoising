@@ -3,7 +3,7 @@
 This chapter provides the necessary background for the denoising methods explored in this work.
 We begin by defining the general denoising problem and discussing its inherent challenges.
 We then introduce distributed acoustic sensing (DAS) as a real-world application and highlight the unique difficulties 
-it presents.
+it poses.
 Finally, we present key deep learning concepts and techniques that are used in the context of denoising.
 
 \section{Denoising}
@@ -55,8 +55,8 @@ These shifts are detected by the interrogator and, since the travel time of the 
 accurately locate the strain along the cable~\cite{DAS-N2N}.
 In order to extract meaningful measurements, strain is analyzed over sections of the fiber, rather than at individual
 points.
-The length of these sections is called the \textit{gauge length}, while another parameter, the \textit{channel spacing},
-determines how much this section is moved for each measurement, or channel, along the cable~\cite{GaugeLength}.
+The length of these sections is called the gauge length, while another parameter, the channel spacing, determines how
+much this section is moved for each measurement, or channel, along the cable~\cite{GaugeLength}.
 In practice, each channel corresponds to a virtual sensor capturing the average strain within its gauge length.
 Typically, the gauge length is selected to be bigger than the channel spacing, meaning that the measurement sections
 of neighboring channels overlap, as visualized in Figure~\ref{fig:gauge-length}.
@@ -68,7 +68,7 @@ conventional seismographs.
     \includegraphics[width=\textwidth]{img/fig_2.2.png}
     \caption{
         Types of noise in different DAS setups.
-        Both measurements capture seismic events; however, the SISSLE data mainly suffers from traffic noise
+        Both measurements capture seismic activity; however, the SISSLE data mainly suffers from traffic noise
         (the diagonal lines).
         In contrast, erratic and common mode noise (the horizontal and vertical lines,
         respectively) are most prominent in the FORGE data.
@@ -102,7 +102,7 @@ The output of a single neuron is given by
     y = \varphi(\mathbf{w}^T\mathbf{x} + b)
 \end{equation}
 for an input~$\mathbf{x} \in \R^n$, a weight vector~$\mathbf{w} \in \R^n$, a bias~$b \in \R$ and an activation
-function~$\varphi$.
+function~$\varphi: \R \rightarrow \R$.
 The outputs of each layer are then passed as inputs to the next layer, which is why this architecture is known as a
 fully-connected neural network. 
 The activation functions are needed in order to avoid the network collapsing into a single linear transformation. 
@@ -226,7 +226,7 @@ regardless of their position, which makes CNNs very suitable for image data~\cit
 During the training process, the inputs of each layer change with each iteration as the parameters are optimized.
 That slows down the training because now each layer has to adapt to the new distribution of its inputs. This process is
 often referred to as internal covariate shift.
-To counteract this issue, Ioffe \etal proposed Batch Normalization (BN)~\cite{BatchNorm}.
+To counteract this issue, Ioffe~\etal proposed Batch Normalization (BN)~\cite{BatchNorm}.
 The idea behind BN is to normalize the inputs across the whole mini-batch and their spatial dimensions.
 The normalized input for a channel $i$ is given by
 \begin{equation}

@@ -31,8 +31,10 @@
 \addbibresource{references.bib}
 
 % Abbreviations
-\newcommand{\etal}{et al.\ }
+\newcommand{\etal}{et~al.\ }
+\newcommand{\etalc}{et~al.~}
 \newcommand{\eg}{e.g.\ }
+\newcommand{\ie}{i.e.\ }
 
 % Math shorthands
 \newcommand{\R}{\mathbb{R}}
@@ -40,13 +42,17 @@
 
 \newcommand{\normal}{\mathcal{N}(\mathbf{0},\sigma^2\mathbf{I})}
 
-% \newcommand{\E}[2]{\mathbb{E}_{#1}\left[#2\right]}
+\newcommand{\E}[1]{\mathbb{E} [#1]}
 % \newcommand{\cnormal}[1][z]{\mathcal{N}(#1\mid 0,\mathbf{I})}
 
 % \DeclareMathOperator*{\argmax}{argmax}
-% \DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\argmin}{argmin}
 
 % Avoid widows and orphans
 \clubpenalty = 10000
 \widowpenalty = 10000 
 \displaywidowpenalty = 10000
+
+% Avoid inline math breaking
+\relpenalty=10000
+\binoppenalty=10000

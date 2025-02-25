@@ -1,5 +1,13 @@
 \chapter{Methods}\label{ch:methods}
 
+While the self-supervised denoising methods discussed so far eliminate the need for clean data, most still require large datasets of noisy images or are limited to specific noise types.
+A notable exception is the Deep Image Prior (DIP) introduced by Ulyanov~\etalc \cite{DIP}.
+DIP is a zero-shot method, \ie it operates on a single noisy sample, and does not make any explicit assumptions about the noise distribution.
+
+In this chapter, we present the DIP and various extensions.
+First, we describe the fundamental principles of DIP, followed by common regularization techniques such as early stopping and total variation.
+Finally, we explore other DIP-based approaches that build upon these foundations.
+
 \section{Deep Image Prior}
 
 \subsection{Early Stopping}
