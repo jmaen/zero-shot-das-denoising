@@ -1,14 +1,47 @@
-\chapter{Methods}\label{ch:methods}
+\chapter{Methods}
 
 While the self-supervised denoising methods discussed so far eliminate the need for clean data, most still require large datasets of noisy images or are limited to specific noise types.
-A notable exception is the Deep Image Prior (DIP) introduced by Ulyanov~\etalc \cite{DIP}.
-DIP is a zero-shot method, \ie it operates on a single noisy sample, and does not make any explicit assumptions about the noise distribution.
+A notable exception is the Deep Image Prior (DIP) introduced by Ulyanov~et al.~\cite{DIP}.
+DIP is a zero-shot method, meaning it operates on a single noisy sample, and does not make any explicit assumptions about the noise distribution.
 
-In this chapter, we present the DIP and various extensions.
-First, we describe the fundamental principles of DIP, followed by common regularization techniques such as early stopping and total variation.
-Finally, we explore other DIP-based approaches that build upon these foundations.
+In this chapter, we present DIP and its various extensions.
+First, we describe the fundamental principles of DIP, followed by common techniques used to further regularize the solution.
+Finally, we explore additional DIP-based approaches that build upon these foundations.
 
 \section{Deep Image Prior}
+
+As discussed in Section~\ref{sec:denoising}, denoising is an ill-posed inverse problem and therefore appropriate regularization is crucial in order to obtain plausible solutions.
+This is typically expressed as an optimization problem of the form
+\begin{equation}\label{eq:ip-optim}
+    \hat{x} = \argmin_x L(x,y) + R(x),
+\end{equation}
+where $L(x,y)$ is a data fidelity term that ensures that the denoised estimate $\hat{x}$ stays close to the noisy signal $y$ and $R(x)$ is the regularizer.
+Most traditional, non-deep-learning methods, such as total variation denoising~\cite{TV}, rely on an explicit regularization term.
+The self-supervised methods discussed in Section~\ref{sec:self-supervised} do not necessarily include such a term; however, they do make specific assumptions about the solution (e.g., zero-mean or spatially independent noise), which are implicitly encoded in the training procedure --- through techniques like sub-sampling or masking.
+
+In contrast, DIP does not make any explicit assumptions about the noise or image structure.
+Instead, it relies solely on the architecture of a convolutional neural network to implicitly regularize the solution.
+The key idea is to parameterize an image $x$ as the output of an CNN $f_\theta$ through $x = f_\theta(z)$, where $z$ refers to a random vector, e.g.\ $z \sim \normal$.
+This means that instead of optimizing $x$ directly, the reconstruction is constrained by the network's ability to map $z$ to a plausible image.
+In terms of (\ref{eq:ip-optim}), the squared L2-norm is used as the loss function and the regularizer $R(x)$ is replaced with the implicit prior induced by the network structure, leading to the following optimization:
+\begin{equation}
+    \theta^* = \argmin_\theta ||f_\theta(z) - y||_2^2.
+\end{equation}
+After training the network using gradient descent, the denoised estimate is then obtained as $\hat{x} = f_{\theta^*}(z)$.
+The random vector $z$ remains fixed throughout the training process.
+The regularizing effect of this parametrization relies on the observation that CNNs tend to capture structured patterns (e.g.\ edges and textures) before fitting to high-frequency noise.
+However, since the network is sufficiently expressive, it will eventually memorize the noise, leading to overfitting.
+Thus, it is crucial to identify the optimal stopping point, at which the network successfully learned the underlying image structure while minimizing the influence of noise.
+This process is visualized in Figure~\ref{fig:dip-process}. % TODO DIP process figure
+Formally, this regularizer can be expressed as
+\begin{equation}
+    R(x) = \begin{cases}
+        0 &\text{$f_\theta$ can produce $x$ in $N$ steps}\\
+        +\infty &\text{else}
+    \end{cases}
+\end{equation}
+where $N$ refers to a fixed maximum number of iterations.
+However, such a fixed stopping point is not ideal because the optimal stopping point depends on factors such as the specific image $x$, the random vector $z$ and also the initial network parameters $\theta_0$.
 
 \subsection{Early Stopping}
 

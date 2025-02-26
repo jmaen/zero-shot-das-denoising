@@ -30,12 +30,6 @@
 \usepackage{biblatex}
 \addbibresource{references.bib}
 
-% Abbreviations
-\newcommand{\etal}{et~al.\ }
-\newcommand{\etalc}{et~al.~}
-\newcommand{\eg}{e.g.\ }
-\newcommand{\ie}{i.e.\ }
-
 % Math shorthands
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\C}{\mathbb{C}}
