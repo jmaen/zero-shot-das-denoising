@@ -11,21 +11,21 @@ Traditional supervised methods typically employ a neural network~$f_\theta$ to l
 Therefore, a dataset of paired clean and noisy images, denoted $\{(y^i,x^i)\}_i^n$, is essential for the training process.
 The corresponding optimization problem is given by
 \begin{equation}\label{eq:N2C}
-    \argmin_\theta \sum_{i=1}^{n} ||f_\theta(y^i) - x^i||_2^2.
+    \argmin_\theta \sum_{i=1}^{n} \norm{f_\theta(y^i) - x^i}_2^2.
 \end{equation}
 
 
-Zhang~et al.\ proposed the denoising convolutional neural network (DnCNN)~\cite{DnCNN} which improves denoising performance by making use of residual learning, i.e.\ instead of directly predicting the clean image, it is trained to predict the noise in the noisy image.
+Zhang~et al.\ propose the denoising convolutional neural network (DnCNN)~\cite{DnCNN} which improves denoising performance by making use of residual learning, i.e., instead of directly predicting the clean image, it is trained to predict the noise in the noisy image.
 The denoised image is then obtained as $\hat{x} = y - f_{\theta^*}(y)$ for trained parameters~$\theta^*$.
 However, depending on the problem setting, acquiring the needed clean data can be difficult or even impossible, for example in medical imaging or also in DAS\@.
 
-To address this issue, Lehtinen~et al.\ proposed Noise2Noise (N2N)~\cite{N2N}, which does not require any clean data.
+To address this issue, Lehtinen~et al.\ propose Noise2Noise (N2N)~\cite{N2N}, which does not require any clean data.
 Instead, it utilizes two independent noisy observations $y_1 = x + n_1$ and $y_2 = x + n_2$ of the same underlying clean signal $x$ as input and target, respectively.
 The training objective then becomes
 \begin{equation}\label{eq:N2N}
-    \argmin_\theta \sum_{i=1}^{n} ||f_\theta(y_1^i) - y_2^i||_2^2.
+    \argmin_\theta \sum_{i=1}^{n} \norm{f_\theta(y_1^i) - y_2^i}_2^2.
 \end{equation}
-This method relies on the assumption that the noise is zero-mean, i.e.\ $\E{n} = 0$, which, due to linearity of expectation, implies that $\E{y} = x$.
+This method relies on the assumption that the noise is zero-mean, i.e., $\E{n} = 0$, which, due to linearity of expectation, implies that $\E{y} = x$.
 Since the MSE is a mean-seeking loss function, the network then learns to predict $x$ implicitly.
 Given infinite data, the optimal solution is actually equivalent to the one obtained by training with clean targets.
 Although N2N is often impractical in practice because the required noisy-noisy pairs are difficult to obtain, it led to the development of other \textit{self}-supervised approaches.
@@ -83,7 +83,7 @@ Therefore, the network can only learn from the neighboring pixels, which --- und
         \draw[dashed] (2,0,5) -- (-1+3,2,4);
 
         \fill[color=Apricot!80] (-1+1,2,1) -- (-1+4,2,1) -- (-1+4,2,4) -- (-1+1,2,4) -- cycle;
-        \fill[color=Maroon!50] (-1+3,2,3) -- (-1+4,2,3) -- (-1+4,2,4) -- (-1+3,2,4) -- cycle;
+        \fill[color=Maroon!60] (-1+3,2,3) -- (-1+4,2,3) -- (-1+4,2,4) -- (-1+3,2,4) -- cycle;
         \foreach \i in {1,2,3,4} {
             \draw (-1,2,\i) -- (-1+5,2,\i);
             \draw (-1+\i,2,0) -- (-1+\i,2,5);
@@ -95,7 +95,7 @@ Therefore, the network can only learn from the neighboring pixels, which --- und
         \draw[dashed] (-1+4,2,4) -- (-2+3,4,3);
         \draw[dashed] (-1+1,2,4) -- (-2+2,4,3);
 
-        \fill[color=Maroon!50] (-2+2,4,2) -- (-2+3,4,2) -- (-2+3,4,3) -- (-2+2,4,3) -- cycle;
+        \fill[color=Maroon!60] (-2+2,4,2) -- (-2+3,4,2) -- (-2+3,4,3) -- (-2+2,4,3) -- cycle;
         \foreach \i in {1,2,3,4} {
             \draw (-2,4,\i) -- (-2+5,4,\i);
             \draw (-2+\i,4,0) -- (-2+\i,4,5);
@@ -105,7 +105,7 @@ Therefore, the network can only learn from the neighboring pixels, which --- und
     \caption{Receptive field in CNNs, using a $3 \times 3$ kernel.}\label{fig:receptive-field}
 \end{wrapfigure}
 
-Krull~et al.\ first introduced this concept in their Noise2Void (N2V) paper~\cite{N2V}.
+Krull~et al.\ first introduce this concept in their Noise2Void (N2V) paper~\cite{N2V}.
 The authors consider training a network to predict the center pixel of a single patch of the input image in a supervised fashion, using the actual pixel value as the target.
 To prevent the network from simply learning the identity, they propose restricting the output pixel's receptive field by masking the center pixel.
 The receptive field refers to the set of pixels in the input that influences a particular pixel in the output, as visualized in Figure~\ref{fig:receptive-field}.
@@ -115,14 +115,14 @@ In order to allow efficient training, they approximate this behavior by training
 In Noise2Self (N2S)~\cite{N2S}, Batson~et al.\ generalize this concept to sets of variables, instead of single pixels only, by introducing the notion of $\mathcal{J}$-invariance.
 For a noisy input image~$y \in \R^m$, let $\mathcal{J}$ be a partition of the dimensions $\{1,\dots,m\}$.
 For a subset of the dimensions~$J \in \mathcal{J}$, $x_J$ denotes $x$ restricted to the dimensions $J$.
-A function $f: \R^m \rightarrow \R^m$ is said to be $\mathcal{J}$-invariant if, for each $J \in \mathcal{J}$, $f(x)_J$ does not depend on $x_J$, i.e.\ 
+A function $f: \R^m \rightarrow \R^m$ is said to be $\mathcal{J}$-invariant if, for each $J \in \mathcal{J}$, $f(x)_J$ does not depend on $x_J$, i.e.,
 \begin{equation}
     f(x)_J = f(x_{J^c})_J,
 \end{equation}
 where $J^c$ refers to the complement of $J$.
 The training objective from (\ref{eq:N2C}) than becomes
 \begin{equation}
-    \argmin_\theta \sum_{i=1}^{n} ||f_\theta(y^i_{J^c})_J - y^i_J||_2^2.
+    \argmin_\theta \sum_{i=1}^{n} \norm{f_\theta(y^i_{J^c})_J - y^i_J}_2^2.
 \end{equation}
 As in N2V, $x_{J^c}$ is obtained through a masking strategy; the main difference lies in the way the masked pixels are replaced.
 While N2S directly uses random values, N2V chooses the replacement pixels randomly from local neighbors.

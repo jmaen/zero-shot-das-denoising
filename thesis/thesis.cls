@@ -14,15 +14,19 @@
 \usepackage[english]{babel}
 \usepackage[dvipsnames]{xcolor}
 \usepackage[hidelinks]{hyperref}
-\usepackage{amsmath,amssymb}
-
-% Figures
 \usepackage{wrapfig}
 \usepackage{graphicx}
 \usepackage[labelfont=bf]{caption}
+\usepackage{booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{mathtools}
+
+% Graphics
 \usepackage{tikz}
 \usepackage{tikz-3dplot}
 \usetikzlibrary{decorations.pathreplacing}
+\usetikzlibrary{arrows.meta}
+\usetikzlibrary{intersections, positioning}
 % \usepackage{pgfplots}
 
 % Bibliography
@@ -35,12 +39,15 @@
 \newcommand{\C}{\mathbb{C}}
 
 \newcommand{\normal}{\mathcal{N}(\mathbf{0},\sigma^2\mathbf{I})}
-
-\newcommand{\E}[1]{\mathbb{E} [#1]}
 % \newcommand{\cnormal}[1][z]{\mathcal{N}(#1\mid 0,\mathbf{I})}
 
-% \DeclareMathOperator*{\argmax}{argmax}
+\newcommand{\E}[1]{\mathbb{E} [#1]}
+\DeclareMathOperator{\Var}{Var}
+
+\DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator*{\argmin}{argmin}
+
+\DeclarePairedDelimiterX{\norm}[1]{\lVert}{\rVert}{#1}
 
 % Avoid widows and orphans
 \clubpenalty = 10000

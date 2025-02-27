@@ -42,7 +42,7 @@ This phenomenon is referred to as Rayleigh scattering.
         Figure adapted from~\cite{GaugeLength}.
     }\label{fig:gauge-length}
 \end{wrapfigure}
-Vibrations along the cable caused by external influences, e.g.\ seismic events, strain the fiber, which in turn causes phase shifts in the backscattered light.
+Vibrations along the cable caused by external influences, e.g., seismic events, strain the fiber, which in turn causes phase shifts in the backscattered light.
 These shifts are detected by the interrogator and, since the travel time of the light is known, can be used to accurately locate the strain along the cable~\cite{DAS-N2N}.
 In order to extract meaningful measurements, strain is analyzed over sections of the fiber, rather than at individual points.
 The length of these sections is called the gauge length, while another parameter, the channel spacing, determines how much this section is moved for each measurement, or channel, along the cable~\cite{GaugeLength}.
@@ -114,11 +114,6 @@ Second, convolutions are translationally equivariant, meaning that local pattern
     \tdplotsetmaincoords{60}{-45}
 
     \newcommand{\cube}[2]{
-        % background
-        \fill[gray!10, opacity=0.5] (0,0,#1) -- (#1,0,#1) -- (#1,#1,#1) -- (0,#1,#1) -- cycle;
-        \fill[gray!10, opacity=0.5] (0,0,0) -- (#1,0,0) -- (#1,0,#1) -- (0,0,#1) -- cycle;
-        \fill[gray!10, opacity=0.5] (0,0,0) -- (0,#1,0) -- (0,#1,#1) -- (0,0,#1) -- cycle;
-    
         % edges
         \draw[thick] (0,0,0) -- (0,0,#1);
         \draw[thick] (0,#1,#1) -- (0,#1,0) -- (0,0,0) -- (#1,0,0) -- (#1,0,#1);
@@ -147,33 +142,37 @@ Second, convolutions are translationally equivariant, meaning that local pattern
 
     \def\a{4}
     \begin{tikzpicture}[tdplot_main_coords, line join=round, scale=0.5]
-        \fill[Maroon] (0,0,0) -- (\a,0,0) -- (\a,0,\a) -- (0,0,\a) -- cycle;
-        \fill[Maroon] (0,0,0) -- (0,1,0) -- (0,1,\a) -- (0,0,\a) -- cycle;
-        \fill[Maroon] (0,0,\a) -- (\a,0,\a) -- (\a,1,\a) -- (0,1,\a) -- cycle;
+        \fill[gray!10] (0,0,0) -- (\a,0,0) -- (\a,0,\a) -- (\a,\a,\a) -- (0,\a,\a) -- (0,\a,0) -- cycle;
+        \fill[Maroon!60] (0,0,0) -- (\a,0,0) -- (\a,0,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon!60] (0,0,0) -- (0,1,0) -- (0,1,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon!60] (0,0,\a) -- (\a,0,\a) -- (\a,1,\a) -- (0,1,\a) -- cycle;
 
         \cube{\a}{Batch Norm}
     \end{tikzpicture}
     \hfill
     \begin{tikzpicture}[tdplot_main_coords, line join=round, scale=0.5]
-        \fill[Maroon] (0,0,0) -- (0,\a,0) -- (0,\a,\a) -- (0,0,\a) -- cycle;
-        \fill[Maroon] (0,0,0) -- (1,0,0) -- (1,0,\a) -- (0,0,\a) -- cycle;
-        \fill[Maroon] (0,0,\a) -- (0,\a,\a) -- (1,\a,\a) -- (1,0,\a) -- cycle;
+        \fill[gray!10] (0,0,0) -- (\a,0,0) -- (\a,0,\a) -- (\a,\a,\a) -- (0,\a,\a) -- (0,\a,0) -- cycle;
+        \fill[Maroon!60] (0,0,0) -- (0,\a,0) -- (0,\a,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon!60] (0,0,0) -- (1,0,0) -- (1,0,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon!60] (0,0,\a) -- (0,\a,\a) -- (1,\a,\a) -- (1,0,\a) -- cycle;
 
         \cube{\a}{Layer Norm}
     \end{tikzpicture}
     \hfill
     \begin{tikzpicture}[tdplot_main_coords, line join=round, scale=0.5]
-        \fill[Maroon] (0,0,0) -- (0,1,0) -- (0,1,\a) -- (0,0,\a) -- cycle;
-        \fill[Maroon] (0,0,0) -- (1,0,0) -- (1,0,\a) -- (0,0,\a) -- cycle;
-        \fill[Maroon] (0,0,\a) -- (0,1,\a) -- (1,1,\a) -- (1,0,\a) -- cycle;
+        \fill[gray!10] (0,0,0) -- (\a,0,0) -- (\a,0,\a) -- (\a,\a,\a) -- (0,\a,\a) -- (0,\a,0) -- cycle;
+        \fill[Maroon!60] (0,0,0) -- (0,1,0) -- (0,1,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon!60] (0,0,0) -- (1,0,0) -- (1,0,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon!60] (0,0,\a) -- (0,1,\a) -- (1,1,\a) -- (1,0,\a) -- cycle;
 
         \cube{\a}{Instance Norm}
     \end{tikzpicture}
     \hfill
     \begin{tikzpicture}[tdplot_main_coords, line join=round, scale=0.5]
-        \fill[Maroon] (0,0,0) -- (0,\a/2,0) -- (0,\a/2,\a) -- (0,0,\a) -- cycle;
-        \fill[Maroon] (0,0,0) -- (1,0,0) -- (1,0,\a) -- (0,0,\a) -- cycle;
-        \fill[Maroon] (0,0,\a) -- (0,\a/2,\a) -- (1,\a/2,\a) -- (1,0,\a) -- cycle;
+        \fill[gray!10] (0,0,0) -- (\a,0,0) -- (\a,0,\a) -- (\a,\a,\a) -- (0,\a,\a) -- (0,\a,0) -- cycle;
+        \fill[Maroon!60] (0,0,0) -- (0,\a/2,0) -- (0,\a/2,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon!60] (0,0,0) -- (1,0,0) -- (1,0,\a) -- (0,0,\a) -- cycle;
+        \fill[Maroon!60] (0,0,\a) -- (0,\a/2,\a) -- (1,\a/2,\a) -- (1,0,\a) -- cycle;
 
         \cube{\a}{Group Norm}
     \end{tikzpicture}
@@ -187,7 +186,7 @@ Second, convolutions are translationally equivariant, meaning that local pattern
 
 During the training process, the inputs of each layer change with each iteration as the parameters are optimized.
 That slows down the training because now each layer has to adapt to the new distribution of its inputs. This process is often referred to as internal covariate shift.
-To counteract this issue, Ioffe~et al.\ proposed Batch Normalization (BN)~\cite{BatchNorm}.
+To counteract this issue, Ioffe~et al.\ propose Batch Normalization (BN)~\cite{BatchNorm}.
 The idea behind BN is to normalize the inputs across the whole mini-batch and their spatial dimensions.
 The normalized input for a channel $i$ is given by
 \begin{equation}
@@ -210,7 +209,7 @@ An attention mechanism helps the network to focus on (\textit{attend to}) the mo
 This works by dynamically reweighting the features based on their importance~\cite{Attention}.
 While attention is often associated with natural language processing (NLP), especially since the introduction of the Transformer architecture~\cite{Transformer} where it is the underlying key principle, it also has applications beyond NLP.\@
 In computer vision, for example, it can help CNNs by reweighting feature channels~\cite{SqueezeExcite} or highlighting important spatial regions.
-% TODO add details
+% TODO ECA
 
 \section{Fourier Transform}
 % TODO add fourier?
