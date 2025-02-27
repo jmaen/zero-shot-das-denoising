@@ -36,7 +36,7 @@ def load_celeba(num_samples=1):
         transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
     ])
 
-    dataset = torchvision.datasets.CelebA(root='./data/', download=True, transform=transform)
+    dataset = torchvision.datasets.CelebA(root='./data/image/', download=True, transform=transform)
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=num_samples, shuffle=True)
 
     return next(iter(data_loader))[0]

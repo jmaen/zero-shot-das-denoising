@@ -3,6 +3,7 @@ import math
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
 import cv2
 import wandb
 from IPython.display import Video, HTML, display
@@ -83,6 +84,8 @@ class Logger():
         elif self.mode == "wandb":
             wandb.run.summary.update(summary)
             wandb.finish()
+
+        return self.data
 
     # TODO: cleanup
 
@@ -185,7 +188,7 @@ class Logger():
         for tensor in tensors:
             tensor = tensor.squeeze()
             if seismic:
-                vmin, vmax = -2, 2
+                vmin, vmax = -5, 5
                 tensor = (tensor - vmin) / (vmax - vmin)
                 tensor = tensor.clamp(vmin, vmax)
             else:
@@ -195,10 +198,13 @@ class Logger():
                 tensor = tensor.unsqueeze(0)
             if len(tensor) != 3:
                 tensor = tensor[:1].expand((3, -1, -1))
-            frame = (tensor.permute(1, 2, 0).cpu().numpy() * 255).astype(np.uint8)
-            resized_frame = self.resize_frame(frame, target_height)
+
+            frame = tensor.permute(1, 2, 0).cpu().numpy()
             if seismic:
-                resized_frame = (plt.cm.seismic(resized_frame[:, :, 0])[:, :, :3] * 255).astype(np.uint8)
+                frame = plt.cm.seismic(frame[:, :, 0])[:, :, :3]
+
+            frame = (frame * 255).astype(np.uint8)
+            resized_frame = self.resize_frame(frame, target_height)
             resized_frames.append(resized_frame)
         
         separator = np.full((target_height, separator_width, 3), 255, dtype=np.uint8)

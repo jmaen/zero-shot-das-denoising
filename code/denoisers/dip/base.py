@@ -86,14 +86,14 @@ class Base(Denoiser):
 
         x_hat = self.optimize(y, state)
 
-        self.on_train_end(state)
+        logs = self.on_train_end(state)
 
         self.net.reset_parameters()
 
         # unpadding
         x_hat = x_hat[:, :, pad_t:W+pad_t, pad_l:H+pad_l]
 
-        return x_hat
+        return x_hat, logs, state
     
     def optimize(self, y: torch.Tensor, state: Dict[str, Any] = {}):
         raise NotImplementedError("Optimization function must be implemented by subclass")
@@ -158,4 +158,6 @@ class Base(Denoiser):
                 result = metric(state["x_hat"], state["x"]).item()
                 state["summary"][key] = result
 
-        self.logger.finish(state["summary"])
+        data = self.logger.finish(state["summary"])
+
+        return data
