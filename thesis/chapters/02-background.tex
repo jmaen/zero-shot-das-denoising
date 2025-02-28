@@ -10,9 +10,9 @@ Finally, we present key deep learning concepts and techniques that are used in t
 In general, denoising refers to the process of recovering a clean signal from a noisy observation.
 This is commonly framed as an inverse problem (IP), formally described by
 \begin{equation}
-    y = x + n
+    y = x + n,
 \end{equation}
-where $y$ is the noisy observation, $x$ is the underlying clean signal and $n$ represents some form of noise, for example Gaussian noise~$n \sim \normal$.
+where $y$ is the noisy observation, $x$ is the underlying clean signal and $n$ represents some form of noise, for example Gaussian noise~$n \sim \unormal$.
 Since both the noise and its distribution are often unknown, denoising is an inherently ill-posed problem, as multiple solutions can explain the same noisy data.
 Therefore, additional assumptions or constraints on the solution space are necessary, a process typically referred to as regularization.
 This can involve the use of a \textit{prior}, which encodes our beliefs about the likely properties of the clean signal.
@@ -100,7 +100,7 @@ Prior to the rise of deep learning, such kernels were designed manually for vari
 In CNNs, these kernels are automatically learned from data. In contrast to fully-connected layers, the output of a convolutional layer is obtained by convolution with one or multiple kernels, replacing the matrix multiplication.
 For a kernel $\mathbf{K} \in \R^{m \times n}$, the convolution is defined as
 \begin{equation}
-    (\mathbf{X} \ast \mathbf{K})_{i,j} = \sum_{k=1}^{m}\sum_{l=1}^{n} X_{i+m,j+n} \cdot K_{k,l}.
+    (\mathbf{X} \ast \mathbf{K})_{i,j} = \sum_{k=1}^{m}\sum_{l=1}^{n} \mathbf{X}_{i+m,j+n} \cdot \mathbf{K}_{k,l}.
 \end{equation}
 The output of the convolution is then passed through a non-linear activation function, just like in fully-connected layers.
 CNNs provide two main advantages: First, since the weights are shared across the spatial dimensions, convolutional layers drastically reduce the number of parameters compared to fully-connected layers. 
@@ -209,13 +209,13 @@ This works by dynamically reweighting the features based on their importance~\ci
 While attention is often associated with natural language processing (NLP), especially since the introduction of the Transformer architecture~\cite{Transformer} where it is the underlying key principle, it also has applications beyond NLP.\@
 In computer vision, for example, it can help CNNs by reweighting feature channels or highlighting important spatial regions.
 One such method is Efficient Channel Attention (ECA), proposed by Wang et al.~\cite{ECA}, which uses global average pooling followed by a lightweight 1D-convolution to dynamically recalibrate feature importance.
-For an output~$x \in \R^{W \times H \times C}$ of a convolutional layer, where $W$, $H$ and $C$ denote width, height and channel dimension, respectively, the weight of a feature channel $i$ is given by
+For an output~$\mathbf{X} \in \R^{W \times H \times C}$ of a convolutional layer, where $W$, $H$ and $C$ denote width, height and channel dimension, respectively, the weight of a feature channel $i$ is given by
 \begin{equation}
-    \mathbf{w}_i = \sigma(g(\mathbf{x}) \ast \mathbf{K})_i
+    \mathbf{w}_i = \sigma(g(\mathbf{X}) \ast \mathbf{K})_i,
 \end{equation}
 where $\sigma$ denotes a Sigmoid activation function, $\mathbf{K} \in \R^{1,k}$ is a 1D-kernel with the kernel size $k$ adaptively calculated based on $C$, and $g(\mathbf{x})$ represents channel-wise global average pooling:
 \begin{equation}
-    g(\mathbf{x}) = \frac{1}{WH} \sum_{i=1}^{W} \sum_{j=1}^{H} \mathbf{x}_{i,j}.
+    g(\mathbf{X}) = \frac{1}{WH} \sum_{i=1}^{W} \sum_{j=1}^{H} \mathbf{X}_{i,j}.
 \end{equation}
 This mechanism allows ECA to improve performance while being more efficient than predecessors like squeeze-and-excitation networks~\cite{SqueezeExcite}, which rely on more expensive fully-connected layers.
 

@@ -38,8 +38,9 @@
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\C}{\mathbb{C}}
 
-\newcommand{\normal}{\mathcal{N}(\mathbf{0},\sigma^2\mathbf{I})}
-% \newcommand{\cnormal}[1][z]{\mathcal{N}(#1\mid 0,\mathbf{I})}
+\newcommand{\unormal}{\mathcal{N}(\mathbf{0},\mathbf{I})}
+\newcommand{\normal}[2]{\mathcal{N}(#1,#2)}
+\newcommand{\fnormal}[3]{\mathcal{N}(#1;#2,#3)}
 
 \newcommand{\E}[1]{\mathbb{E} [#1]}
 \DeclareMathOperator{\Var}{Var}

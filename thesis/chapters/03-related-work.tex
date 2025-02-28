@@ -47,15 +47,15 @@ Therefore, by the same reasoning as in N2N, given a sufficient amount of noisy i
 While this method removes the need for a paired dataset, it requires knowledge of the noise distribution in order to sample the additional noise.
 
 Another approach based on N2N is Neighbor2Neighbor~\cite{Neighbor2Neighbor}.
-The key idea behind this method is to construct training pairs from the noisy input $y$ by leveraging spatial redundancy through a sub-sampling strategy:
-$y$ is divided into $2 \times 2$ cells from each of which two neighboring pixels are randomly selected --- one pixel is assigned to the first sub-sampled image and the other to the second.
-These sub-sampled images then build the noisy training pair.
-As a result of the sub-sampling, unlike in N2N, the underlying clean signal $x$ is not exactly identical in the two noisy images.
-To address this, the authors extend the training strategy given by~(\ref{eq:N2N}) by using an additional regularization term that encourages minimizing differences between sub-sampled versions of the denoised estimate.
+The key idea behind this method is to construct training pairs from the noisy input $y$ by leveraging spatial redundancy through a subsampling strategy:
+$y$ is divided into $2 \times 2$ cells from each of which two neighboring pixels are randomly selected --- one pixel is assigned to the first subsampled image and the other to the second.
+These subsampled images then build the noisy training pair.
+As a result of the subsampling, unlike in N2N, the underlying clean signal $x$ is not exactly identical in the two noisy images.
+To address this, the authors extend the training strategy given by~(\ref{eq:N2N}) by using an additional regularization term that encourages minimizing differences between subsampled versions of the denoised estimate.
 
 Zero-Shot Noise2Noise~\cite{ZS-N2N} takes this idea one step further by enabling training on just one single noisy image instead of a set of noisy images.
 The term \textit{zero-shot} refers to a training setup where the model is supposed to make predictions for types of data it has never observed before without any training examples.
-This approach employs a similar sub-sampling strategy to obtain input and target values.
+This approach employs a similar subsampling strategy to obtain input and target values.
 In order to avoid overfitting to the noisy target, it makes use of residual learning, a symmetric loss and an additional regularization term enforcing consistency with respect to the order in which downsampling and inference are performed.
 
 \subsection{Blind-Spot-Based Methods}

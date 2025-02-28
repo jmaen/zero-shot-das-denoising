@@ -17,11 +17,11 @@ This is typically expressed as an optimization problem of the form
 \end{equation}
 where $L(x,y)$ is a data fidelity term that ensures that the denoised estimate $\hat{x}$ stays close to the noisy signal $y$ and $R(x)$ is the regularizer.
 Most traditional, non-deep-learning methods, such as total variation denoising~\cite{TV}, rely on an explicit regularization term.
-The self-supervised methods discussed in Section~\ref{sec:self-supervised} do not necessarily include such a term; however, they do make specific assumptions about the solution (e.g., zero-mean or spatially independent noise), which are implicitly encoded in the training procedure --- through techniques like sub-sampling or masking.
+The self-supervised methods discussed in Section~\ref{sec:self-supervised} do not necessarily include such a term; however, they do make specific assumptions about the solution (e.g., zero-mean or spatially independent noise), which are implicitly encoded in the training procedure --- through techniques like subsampling or masking.
 
 In contrast, DIP does not make any explicit assumptions about the noise or image structure.
 Instead, it relies solely on the architecture of a convolutional neural network to implicitly regularize the solution.
-The key idea is to parameterize an image $x$ as the output of an CNN $f_\theta$ through $x = f_\theta(z)$, where $z$ refers to a random vector, e.g., $z \sim \normal$.
+The key idea is to parameterize an image $x$ as the output of an CNN $f_\theta$ through $x = f_\theta(z)$, where $z$ refers to a random vector, e.g., $z \sim \unormal$.
 \begin{figure}
     \centering
     \begin{tikzpicture}[scale=1.5]
@@ -83,7 +83,7 @@ In terms of (\ref{eq:ip-optim}), the MSE is used as the loss function and the re
 \end{equation}
 After training the network using gradient descent, the denoised estimate is then obtained as $\hat{x} = f_{\theta^*}(z)$.
 The random vector $z$ remains fixed throughout the training process.
-The regularizing effect of this parametrization relies on the observation that CNNs tend to capture structured patterns (e.g., edges and textures) before fitting to high-frequency noise.
+The regularizing effect of this parameterization relies on the observation that CNNs tend to capture structured patterns (e.g., edges and textures) before fitting to high-frequency noise.
 However, since the network is sufficiently expressive, it will eventually memorize the noise, leading to overfitting.
 Thus, it is crucial to identify the optimal stopping point, at which the network successfully learned the underlying image structure while minimizing the influence of noise.
 This process is visualized in Figure~\ref{fig:priors}.
@@ -91,7 +91,7 @@ Formally, this regularizer can be expressed as
 \begin{equation}
     R(x) = \begin{cases}
         0 &\text{$f_\theta$ can produce $x$ in $N$ steps}\\
-        +\infty &\text{else}
+        +\infty &\text{else},
     \end{cases}
 \end{equation}
 where $N$ refers to a fixed maximum number of iterations.
@@ -146,5 +146,43 @@ Liu et al.\ propose combining the implicit network regularization of DIP with an
 
 \section{Deep Diffusion Image Prior}
 
+% XXX figure forward/reverse process (see DDPM)
+
+% TODO add sources
+Diffusion models~\cite{Diffusion} have emerged as a powerful class of generative models, achieving state-of-the-art performance in various applications, including image synthesis, denoising, and inverse problems. The key idea is to transform complex data distributions into simple ones (such as Gaussian noise) via a forward stochastic process and then train a model to approximate the reverse process.
+Formally, given data $x_0 \sim q(x_0)$, the forward diffusion process produces a sequence of increasingly noisy samples $x_t$ over time $t \in [0,T]$ using a fixed Markovian process:
+\begin{equation}
+    q(x_t \mid x_{t-1}) = \fnormal{x_t}{\sqrt{1 - \beta_t} x_{t-1}}{\beta_t \mathbf{I}},
+\end{equation}
+where $\beta_t$ is a predefined variance schedule controlling how much noise is added at each step. For sufficiently large $T$, $x_T$ approximates pure Gaussian noise.
+A key property of this process is that it admits a closed-form solution at arbitrary timesteps:
+\begin{equation}
+    q(x_t \mid x_0) = \fnormal{x_t}{\sqrt{\bar{\alpha}_t} x_0}{(1-\bar{\alpha}_t) \mathbf{I}},
+\end{equation}
+where $\bar{\alpha}_t = \prod_{s=1}^{t} (a - \beta_s)$ is the cumulative noise factor.
+Using the reparameterization trick~\cite{VAE}, this can be expressed as
+\begin{equation}
+    x_t = \sqrt{\bar{\alpha}_t}x_0 + \sqrt{1-\bar{\alpha}_t}\epsilon, \quad \epsilon \sim \unormal.
+\end{equation}
+In DDPMs~\cite{DDPM}, a simple linear schedule for $\beta_t$ is used. In IDDPM~\cite{IDDPM} an improved cosine noise schedule is introduced, which better balances noise levels across timesteps and leads to higher sample quality.
+The goal of the diffusion model is to learn the reverse process, parameterized by a neural network, which iteratively removes noise:
+\begin{equation}
+    p_\theta(x_{t-1} \mid x_t) = \fnormal{x_{t-1}}{\mu_\theta(x_t, t)}{\beta_t \mathbf{I}},
+\end{equation}
+where $\mu_\theta$ is a neural network predicting the mean of the denoised sample.
+\newpage
+Chung et al.\ combine DIP with ideas from diffusion models, leading to the Deep Diffusion Image Prior (DDIP)~\cite{DDIP}.
+They observe that both DIP and diffusion models aim to recover a posterior mean:
+DIP estimates $\E{x | z,y}$ and diffusion models estimate $\E{x_0 | x_t,y}$.
+As both $z$ and $x_t$ are distributed according to $\unormal$ for $t=T$, they propose a generalization of DIP to multiple noise scales. Instead of optimizing from pure noise, they iteratively reduce the noise in $z$, gradually steering it toward the clean image $x_0$.
+\begin{align}
+    \text{for}\ t=T,\dots,1:\ &\theta_{t-1} = \argmin_{\theta_t} \norm{f_{\theta_t}(x_t) - y}_2^2,\\
+    &x_{t-1} = \sqrt{\bar{\alpha}_t}f_{\theta_{t-1}}(x_t) + \sqrt{1-\bar{\alpha}_t}\epsilon, \quad \epsilon \sim \unormal.
+\end{align}
+In practice, DDIP uses a pre-trained diffusion model as $f_\theta$ and adapts the underlying prior distribution using LoRA~\cite{LoRA} --- optimizing only a small set of additional parameters.
+However, since this work focuses strictly on zero-shot methods, we consider using a completely untrained network, as $f_\theta(x_t)$ can still be seen as an estimate of $x_0$ after a sufficient number of initial iterations.
+
+% different schedules, sqrt -> keep variance from exploding
+% leave out normalization -> interpolation in image space
 
 \section{Self-Guided Deep Image Prior}
