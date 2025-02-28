@@ -155,6 +155,7 @@ dmypy.json
 cython_debug/
 
 .vscode
+.misc
 
 experiments/
 output/

@@ -8,7 +8,7 @@ Finally, we present key deep learning concepts and techniques that are used in t
 \section{Denoising}\label{sec:denoising}
 
 In general, denoising refers to the process of recovering a clean signal from a noisy observation.
-Formally, this is described by the inverse problem 
+This is commonly framed as an inverse problem (IP), formally described by
 \begin{equation}
     y = x + n
 \end{equation}
@@ -71,8 +71,7 @@ The actual noise characteristics of DAS data not only depend on the environment,
 \section{Deep Learning}
 
 Deep learning is a subfield of machine learning that utilizes deep neural networks to learn complex patterns from data. 
-Over the past decade, deep learning has established itself as the state-of-the-art approach for a wide range of problems across various different fields.
-% TODO such as ...
+Over the past decade, deep learning has established itself as the state-of-the-art approach for a wide range of problems across various different fields, such as computer vision~\cite{AlexNet}, natural language processing~\cite{GPT3} and biology~\cite{AlphaFold}.
 
 \subsection{Deep Neural Networks}
 
@@ -99,9 +98,9 @@ While traditionally neural networks only consisted of a few layers and required 
 Convolutional neural networks (CNNs)~\cite{CNN} are a specific type of neural network that learns features using kernels.
 Prior to the rise of deep learning, such kernels were designed manually for various computer vision tasks, for example the Sobel kernel~\cite{Sobel} used for edge detection.
 In CNNs, these kernels are automatically learned from data. In contrast to fully-connected layers, the output of a convolutional layer is obtained by convolution with one or multiple kernels, replacing the matrix multiplication.
-For a kernel $\mathbf{K} \in \R^{n \times m}$, the convolution is defined as
+For a kernel $\mathbf{K} \in \R^{m \times n}$, the convolution is defined as
 \begin{equation}
-    (\mathbf{X} \ast \mathbf{K})_{i,j} = \sum_{k=1}^{n}\sum_{l=1}^{m} X_{i+n,j+m} \cdot K_{k,l}.
+    (\mathbf{X} \ast \mathbf{K})_{i,j} = \sum_{k=1}^{m}\sum_{l=1}^{n} X_{i+m,j+n} \cdot K_{k,l}.
 \end{equation}
 The output of the convolution is then passed through a non-linear activation function, just like in fully-connected layers.
 CNNs provide two main advantages: First, since the weights are shared across the spatial dimensions, convolutional layers drastically reduce the number of parameters compared to fully-connected layers. 
@@ -208,8 +207,17 @@ In neural networks, some input features are typically more important than others
 An attention mechanism helps the network to focus on (\textit{attend to}) the most relevant parts of the input, rather than processing all inputs equally.
 This works by dynamically reweighting the features based on their importance~\cite{Attention}.
 While attention is often associated with natural language processing (NLP), especially since the introduction of the Transformer architecture~\cite{Transformer} where it is the underlying key principle, it also has applications beyond NLP.\@
-In computer vision, for example, it can help CNNs by reweighting feature channels~\cite{SqueezeExcite} or highlighting important spatial regions.
-% TODO ECA
+In computer vision, for example, it can help CNNs by reweighting feature channels or highlighting important spatial regions.
+One such method is Efficient Channel Attention (ECA), proposed by Wang et al.~\cite{ECA}, which uses global average pooling followed by a lightweight 1D-convolution to dynamically recalibrate feature importance.
+For an output~$x \in \R^{W \times H \times C}$ of a convolutional layer, where $W$, $H$ and $C$ denote width, height and channel dimension, respectively, the weight of a feature channel $i$ is given by
+\begin{equation}
+    \mathbf{w}_i = \sigma(g(\mathbf{x}) \ast \mathbf{K})_i
+\end{equation}
+where $\sigma$ denotes a Sigmoid activation function, $\mathbf{K} \in \R^{1,k}$ is a 1D-kernel with the kernel size $k$ adaptively calculated based on $C$, and $g(\mathbf{x})$ represents channel-wise global average pooling:
+\begin{equation}
+    g(\mathbf{x}) = \frac{1}{WH} \sum_{i=1}^{W} \sum_{j=1}^{H} \mathbf{x}_{i,j}.
+\end{equation}
+This mechanism allows ECA to improve performance while being more efficient than predecessors like squeeze-and-excitation networks~\cite{SqueezeExcite}, which rely on more expensive fully-connected layers.
 
 \section{Fourier Transform}
-% TODO add fourier?
+% XXX add fourier
