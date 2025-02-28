@@ -93,7 +93,7 @@ class Base(Denoiser):
         # unpadding
         x_hat = x_hat[:, :, pad_t:W+pad_t, pad_l:H+pad_l]
 
-        return x_hat, logs, state
+        return x_hat, state, logs
     
     def optimize(self, y: torch.Tensor, state: Dict[str, Any] = {}):
         raise NotImplementedError("Optimization function must be implemented by subclass")

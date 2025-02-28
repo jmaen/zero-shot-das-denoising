@@ -81,11 +81,13 @@ class Logger():
             print(f"Summary: {summary}\n")
             if self.step > 0:
                 self.display()
+
+            return self.data
         elif self.mode == "wandb":
             wandb.run.summary.update(summary)
             wandb.finish()
 
-        return self.data
+            return None
 
     # TODO: cleanup
 

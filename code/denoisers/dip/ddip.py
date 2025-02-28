@@ -7,7 +7,7 @@ from .schedules import Schedule
 
 
 class DDIP(Base):
-    def __init__(self, net, loss, schedule: Schedule, early_stopping=False, lr=0.01, max_epochs=2000, normalize=True, **kwargs):
+    def __init__(self, net, loss, schedule: Schedule, early_stopping=False, lr=0.01, max_epochs=2000, normalize=True, k=1, **kwargs):
         super().__init__(net, loss, early_stopping, **kwargs)
 
         self.lr = lr
@@ -15,6 +15,7 @@ class DDIP(Base):
 
         self.schedule = schedule
         self.normalize = normalize
+        self.k = k
 
     def __str__(self):
         return f"DDIP{" - ES" if self.early_stopping else ""} ({str(self.schedule)})"
@@ -27,12 +28,12 @@ class DDIP(Base):
             optimizer.zero_grad()
 
             alpha_bar = self.schedule(epoch / self.max_epochs)
-            if self.normalize:
-                z = math.sqrt(alpha_bar)*x_hat.detach() + math.sqrt(1 - alpha_bar)*torch.randn_like(y, device=self.device)
-            else:
-                z = alpha_bar*x_hat.detach() + (1 - alpha_bar)*torch.randn_like(y, device=self.device)
 
-            x_hat = self.net(z)
+            x_hat_next = torch.zeros_like(y, device=self.device)
+            for _ in range(self.k):
+                z = self._forward(x_hat, alpha_bar)
+                x_hat_next += self.net(z)
+            x_hat = x_hat_next / self.k
             loss = self.loss(x_hat, y, z, epoch / self.max_epochs)
 
             loss.backward()
@@ -49,3 +50,11 @@ class DDIP(Base):
                 break
 
         return state["x_hat"]
+
+    def _forward(self, x_hat, alpha_bar):
+        if self.normalize:
+            z = math.sqrt(alpha_bar)*x_hat.detach() + math.sqrt(1 - alpha_bar)*torch.randn_like(x_hat, device=self.device)
+        else:
+            z = alpha_bar*x_hat.detach() + (1 - alpha_bar)*torch.randn_like(x_hat, device=self.device)
+
+        return z
