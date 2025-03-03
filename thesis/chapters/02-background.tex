@@ -10,15 +10,16 @@ Finally, we present key deep learning concepts and techniques that are used in t
 In general, denoising refers to the process of recovering a clean signal from a noisy observation.
 This is commonly framed as an inverse problem (IP), formally described by
 \begin{equation}
-    y = x + n,
+    y = \mathcal{A}(x) + \epsilon,
 \end{equation}
-where $y$ is the noisy observation, $x$ is the underlying clean signal and $n$ represents some form of noise, for example Gaussian noise~$n \sim \unormal$.
+where $y$ is the noisy observation, $x$ is the underlying clean signal $\mathcal{A}$ refers to any forward operator and $\epsilon$ represents some form of noise, for example Gaussian noise~$\epsilon \sim \unormal$.
+In denoising problems, $\mathcal{A}$ is simply the identity operator.
 Since both the noise and its distribution are often unknown, denoising is an inherently ill-posed problem, as multiple solutions can explain the same noisy data.
 Therefore, additional assumptions or constraints on the solution space are necessary, a process typically referred to as regularization.
 This can involve the use of a \textit{prior}, which encodes our beliefs about the likely properties of the clean signal.
 The choice of regularizer or prior depends on the specific problem setting and the type of data involved.
 
-\section{Distributed Acoustic Sensing}
+\section{Distributed Acoustic Sensing}\label{sec:DAS}
 
 Distributed acoustic sensing (DAS), also known as distributed vibration sensing (DVS)~\cite{DAS}, is an innovative technology for high-resolution vibration measurements over large distances by utilizing fiber optic cables as sensor arrays.
 When a short laser pulse is sent through the fiber by a DAS interrogator unit, a fraction of the light is scattered back due to small variations or imperfections in the fiber.
@@ -38,7 +39,9 @@ This phenomenon is referred to as Rayleigh scattering.
     \end{tikzpicture}
 
     \caption{
-        Gauge length and channel spacing. Red dots represent the individual channels along the fiber.
+        Gauge length and channel spacing.
+        Red dots represent the individual channels along the fiber.
+        This graphic demonstrates just one possible configuration.
         Figure adapted from~\cite{GaugeLength}.
     }\label{fig:gauge-length}
 \end{wrapfigure}
@@ -49,23 +52,20 @@ The length of these sections is called the gauge length, while another parameter
 In practice, each channel corresponds to a virtual sensor capturing the average strain within its gauge length.
 Typically, the gauge length is selected to be bigger than the channel spacing, meaning that the measurement sections of neighboring channels overlap, as visualized in Figure~\ref{fig:gauge-length}.
 This concept of virtual sensors leads to high cost-effectiveness and, paired with the high sample rates enabled by the optical approach, allows measurements with significantly higher spatial and temporal resolution compared to conventional seismographs.
-
 \begin{figure}[b!]
     \includegraphics[width=\textwidth]{img/fig_2.2.png}
     \caption{
         Types of noise in different DAS setups.
-        Both measurements capture seismic activity; however, the SISSLE data mainly suffers from traffic noise
-        (the diagonal lines).
-        In contrast, erratic and common mode noise (the horizontal and vertical lines,
-        respectively) are most prominent in the FORGE data.
+        Both measurements capture seismic activity; however, the SISSLE data mainly suffers from traffic noise (the diagonal lines).
+        In contrast, erratic and common mode noise (the horizontal and vertical lines, respectively) are most prominent in the FORGE data.
+        Both measurements are normalized by their respective standard deviation.
     }\label{fig:das-noise}
 \end{figure}
-
 Despite these advantages, DAS systems often suffer from much lower signal quality than conventional seismographs, as they are more sensitive to various sources of noise.
 These can be divided into environmental noise and optical noise.
 Environmental noise includes natural phenomena such as winds or ocean waves, but also vibrations caused by vehicular and pedestrian traffic.
 Optical noise originates from various interactions between the light and the fiber.
-It includes high-amplitude erratic noise and common mode noise~\cite{IDF}.\\
+It includes high-amplitude erratic noise and common mode noise~\cite{IDF}.
 The actual noise characteristics of DAS data not only depend on the environment, but also the measurement parameters such as channel spacing and sample rate, as visualized in Figure~\ref{fig:das-noise} for data from the SISSLE experiment near Haast, New Zealand~\cite{SISSLE} and the FORGE site in Utah~\cite{FORGE}.
 
 \section{Deep Learning}
@@ -75,16 +75,16 @@ Over the past decade, deep learning has established itself as the state-of-the-a
 
 \subsection{Deep Neural Networks}
 
-In its most basic form, a neural network consists of neurons organized in layers, where each neuron applies a linear transformation followed by a non-linear activation function.
-The output of a single neuron is given by
+In its most basic form, a neural network consists of neurons organized in layers, where each layer applies a linear transformation followed by a non-linear activation function.
+The output of a single layer is given by
 \begin{equation}
-    y = \varphi(\mathbf{w}^T\mathbf{x} + b)
+    y = \varphi(\mathbf{W}\mathbf{x} + \mathbf{b}),
 \end{equation}
-for an input~$\mathbf{x} \in \R^n$, a weight vector~$\mathbf{w} \in \R^n$, a bias~$b \in \R$ and an activation function~$\varphi: \R \rightarrow \R$.
+where $\mathbf{x} \in \R^n$ is the input, $\mathbf{W} \in \R^{m \times n}$ is a weight matrix, $\mathbf{b} \in \R^m$ is a bias vector and $\varphi$ is an activation function applied element-wise, such as the Sigmoid or ReLU~\cite{ReLU}.
 The outputs of each layer are then passed as inputs to the next layer, which is why this architecture is known as a fully-connected neural network. 
 The activation functions are needed in order to avoid the network collapsing into a single linear transformation. 
 Therefore, a neural network can be described as a function~$f_{\theta}: \mathcal{X} \rightarrow \mathcal{Y}$ parameterized by $\theta$, where $\theta$ represents the weights and biases across all layers~\cite{DeepLearning}.
-
+% TODO explain targets better
 In order to optimize these parameters, a loss function~$L: \mathcal{Y} \times \mathcal{Y} \rightarrow \R$ is defined, which measures the difference between the predicted output and the target value. 
 Now, the gradient of the loss function with respect to the parameters, $\nabla_\theta L = \frac{\partial L}{\partial \theta}$, represents the direction of steepest ascent.
 Therefore, by moving the parameters in the opposite direction of the gradient, the loss function can be minimized.
@@ -97,12 +97,15 @@ While traditionally neural networks only consisted of a few layers and required 
 
 Convolutional neural networks (CNNs)~\cite{CNN} are a specific type of neural network that learns features using kernels.
 Prior to the rise of deep learning, such kernels were designed manually for various computer vision tasks, for example the Sobel kernel~\cite{Sobel} used for edge detection.
-In CNNs, these kernels are automatically learned from data. In contrast to fully-connected layers, the output of a convolutional layer is obtained by convolution with one or multiple kernels, replacing the matrix multiplication.
+In CNNs, these kernels are automatically learned from data. In contrast to fully-connected layers, the output of a convolutional layer is obtained by convolution with a kernel, replacing the matrix multiplication.
 For a kernel $\mathbf{K} \in \R^{m \times n}$, the convolution is defined as
 \begin{equation}
     (\mathbf{X} \ast \mathbf{K})_{i,j} = \sum_{k=1}^{m}\sum_{l=1}^{n} \mathbf{X}_{i+m,j+n} \cdot \mathbf{K}_{k,l}.
 \end{equation}
 The output of the convolution is then passed through a non-linear activation function, just like in fully-connected layers.
+In practice, multiple kernels are used per layer, each resulting in a different feature map.
+These feature maps are also referred to as channels, not to be confused with the DAS channels discussed in Section~\ref{sec:DAS}.
+
 CNNs provide two main advantages: First, since the weights are shared across the spatial dimensions, convolutional layers drastically reduce the number of parameters compared to fully-connected layers. 
 Second, convolutions are translationally equivariant, meaning that local patterns in the input can be recognized regardless of their position, which makes CNNs very suitable for image data~\cite{DeepLearning}.
 
@@ -204,16 +207,16 @@ A selection of them is visualized in Figure~\ref{fig:normalization}.
 \subsection{Attention Mechanisms}
 
 In neural networks, some input features are typically more important than others.
-An attention mechanism helps the network to focus on (\textit{attend to}) the most relevant parts of the input, rather than processing all inputs equally.
+An attention mechanism helps the network to focus on (attend to) the most relevant parts of the input, rather than processing all inputs equally.
 This works by dynamically reweighting the features based on their importance~\cite{Attention}.
 While attention is often associated with natural language processing (NLP), especially since the introduction of the Transformer architecture~\cite{Transformer} where it is the underlying key principle, it also has applications beyond NLP.\@
 In computer vision, for example, it can help CNNs by reweighting feature channels or highlighting important spatial regions.
 One such method is Efficient Channel Attention (ECA), proposed by Wang et al.~\cite{ECA}, which uses global average pooling followed by a lightweight 1D-convolution to dynamically recalibrate feature importance.
-For an output~$\mathbf{X} \in \R^{W \times H \times C}$ of a convolutional layer, where $W$, $H$ and $C$ denote width, height and channel dimension, respectively, the weight of a feature channel $i$ is given by
+For an output~$\mathbf{X} \in \R^{C \times W \times H}$ of a convolutional layer, where $W$, $H$ and $C$ denote width, height and channel dimension, respectively, the weight of a feature channel $i$ is given by
 \begin{equation}
     \mathbf{w}_i = \sigma(g(\mathbf{X}) \ast \mathbf{K})_i,
 \end{equation}
-where $\sigma$ denotes a Sigmoid activation function, $\mathbf{K} \in \R^{1,k}$ is a 1D-kernel with the kernel size $k$ adaptively calculated based on $C$, and $g(\mathbf{x})$ represents channel-wise global average pooling:
+where $\sigma$ denotes the Sigmoid activation function, $\mathbf{K} \in \R^{1,k}$ is a 1D-kernel with the kernel size $k$ adaptively calculated based on $C$, and $g(\mathbf{x})$ represents channel-wise global average pooling:
 \begin{equation}
     g(\mathbf{X}) = \frac{1}{WH} \sum_{i=1}^{W} \sum_{j=1}^{H} \mathbf{X}_{i,j}.
 \end{equation}

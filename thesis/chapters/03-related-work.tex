@@ -7,33 +7,31 @@ In this chapter, we give an overview of existing supervised and self-supervised 
 \section{Supervised Methods}
 
 Traditional supervised methods typically employ a neural network~$f_\theta$ to learn a mapping from a noisy image~$y$ to its clean counterpart~$x$.
-Therefore, a dataset of paired clean and noisy images, denoted $\{(y^i,x^i)\}_i^n$, is essential for the training process.
+Therefore, a dataset of paired clean and noisy images, denoted $\{(y^{(i)},x^{(i)})\}_{i=1}^n$, is essential for the training process.
 The corresponding optimization problem is given by
 \begin{equation}\label{eq:N2C}
-    \argmin_\theta \sum_{i=1}^{n} \norm{f_\theta(y^i) - x^i}_2^2.
+    \argmin_\theta \sum_{i=1}^{n} \norm{f_\theta(y^{(i)}) - x^{(i)}}_2^2.
 \end{equation}
-
-
 Zhang~et al.\ propose the denoising convolutional neural network (DnCNN)~\cite{DnCNN} which improves denoising performance by making use of residual learning, i.e., instead of directly predicting the clean image, it is trained to predict the noise in the noisy image.
-The denoised image is then obtained as $\hat{x} = y - f_{\theta^*}(y)$ for trained parameters~$\theta^*$.
+The denoised image is then obtained as $\hat{x} = y - f_{\theta^*}(y)$ for optimized parameters~$\theta^*$.
 However, depending on the problem setting, acquiring the needed clean data can be difficult or even impossible, for example in medical imaging or also in DAS\@.
 
 To address this issue, Lehtinen~et al.\ propose Noise2Noise (N2N)~\cite{N2N}, which does not require any clean data.
 Instead, it utilizes two independent noisy observations $y_1 = x + n_1$ and $y_2 = x + n_2$ of the same underlying clean signal $x$ as input and target, respectively.
 The training objective then becomes
 \begin{equation}\label{eq:N2N}
-    \argmin_\theta \sum_{i=1}^{n} \norm{f_\theta(y_1^i) - y_2^i}_2^2.
+    \argmin_\theta \sum_{i=1}^{n} \norm{f_\theta(y_1^{(i)}) - y_2^{(i)}}_2^2.
 \end{equation}
 This method relies on the assumption that the noise is zero-mean, i.e., $\E{n} = 0$, which, due to linearity of expectation, implies that $\E{y} = x$.
 Since the MSE is a mean-seeking loss function, the network then learns to predict $x$ implicitly.
 Given infinite data, the optimal solution is actually equivalent to the one obtained by training with clean targets.
-Although N2N is often impractical in practice because the required noisy-noisy pairs are difficult to obtain, it led to the development of other \textit{self}-supervised approaches.
+Although N2N is often impractical in practice because the required noisy-noisy pairs are difficult to obtain, it led to the development of other self-supervised approaches.
 
 \section{Self-Supervised Methods}\label{sec:self-supervised}
 
 Self-supervised methods are trained similarly to traditional supervised methods, but they do not rely on externally-provided target values.
 In the context of denoising, these approaches can be broadly categorized into two main strategies:
-N2N-based methods use a training objective similar to the one given by (\ref{eq:N2N}); however they generate their own noisy-noisy training pairs from individual noisy inputs.
+N2N-based methods use a training objective similar to the one given by Equation~(\ref{eq:N2N}); however they generate their own noisy-noisy training pairs from individual noisy inputs.
 Blind-spot-based methods, on the other hand, exploit spatial correlations in the image using different masking strategies, either in the input or in the network architecture itself.
 
 \subsection{N2N-Based Methods}
@@ -41,17 +39,17 @@ Blind-spot-based methods, on the other hand, exploit spatial correlations in the
 Noisier2Noise~\cite{Noisier2Noise} builds upon N2N, but unlike N2N, it does not require a set of paired noisy-noisy images.
 Instead, it constructs these training pairs from individual noisy images only.
 Given a noisy input $y$, it generates an even noisier image $z = y + m = x + n + m$, with additional independent noise $m$ following the same distribution as $n$.
-Once again, it is optimized through~(\ref{eq:N2N}), using $z$ as the input and $y$ as the target.
-The authors argue that $\E{y|z} = x + \frac{n + m}{2}$, since $\E{n} = \E{m}$.
+Once again, it is optimized through Equation~(\ref{eq:N2N}), using $z$ as the input and $y$ as the target.
+The authors argue that $\E{y|z} = x + \frac{n + m}{2}$, since $\E{n} = \E{m}$.  % TODO proof in appendix
 Therefore, by the same reasoning as in N2N, given a sufficient amount of noisy images, the network should learn to predict the mean of $x$ and $z$, which can then be used to obtain the denoised estimate as $\hat{x} = 2f_{\theta^*}(z) - z$.
-While this method removes the need for a paired dataset, it requires knowledge of the noise distribution in order to sample the additional noise.
+While this method removes the need for a paired dataset, it requires knowledge of the noise distribution in order to sample the additional noise, which often is not available in an unsupervised setting.
 
 Another approach based on N2N is Neighbor2Neighbor~\cite{Neighbor2Neighbor}.
 The key idea behind this method is to construct training pairs from the noisy input $y$ by leveraging spatial redundancy through a subsampling strategy:
 $y$ is divided into $2 \times 2$ cells from each of which two neighboring pixels are randomly selected --- one pixel is assigned to the first subsampled image and the other to the second.
 These subsampled images then build the noisy training pair.
 As a result of the subsampling, unlike in N2N, the underlying clean signal $x$ is not exactly identical in the two noisy images.
-To address this, the authors extend the training strategy given by~(\ref{eq:N2N}) by using an additional regularization term that encourages minimizing differences between subsampled versions of the denoised estimate.
+To address this, the authors extend the training strategy given by Equation~(\ref{eq:N2N}) by using an additional regularization term that encourages minimizing differences between subsampled versions of the denoised estimate.
 
 Zero-Shot Noise2Noise~\cite{ZS-N2N} takes this idea one step further by enabling training on just one single noisy image instead of a set of noisy images.
 The term \textit{zero-shot} refers to a training setup where the model is supposed to make predictions for types of data it has never observed before without any training examples.
@@ -115,19 +113,19 @@ In Noise2Self (N2S)~\cite{N2S}, Batson~et al.\ generalize this concept to sets o
 For a noisy input image~$y \in \R^m$, let $\mathcal{J}$ be a partition of the dimensions $\{1,\dots,m\}$.
 For a subset of the dimensions~$J \in \mathcal{J}$, $x_J$ denotes $x$ restricted to the dimensions $J$.
 A function $f: \R^m \rightarrow \R^m$ is said to be $\mathcal{J}$-invariant if, for each $J \in \mathcal{J}$, $f(x)_J$ does not depend on $x_J$, i.e.,
+% TODO not orthogonal instead of equal?
 \begin{equation}
     f(x)_J = f(x_{J^c})_J,
 \end{equation}
 where $J^c$ refers to the complement of $J$.
-The training objective from (\ref{eq:N2C}) than becomes
+The training objective from Equation~(\ref{eq:N2C}) than becomes
 \begin{equation}
-    \argmin_\theta \sum_{i=1}^{n} \norm{f_\theta(y^i_{J^c})_J - y^i_J}_2^2.
+    \argmin_\theta \sum_{i=1}^{n} \norm{f_\theta(y^{(i)}_{J^c})_J - y^{(i)}_J}_2^2.
 \end{equation}
 As in N2V, $x_{J^c}$ is obtained through a masking strategy; the main difference lies in the way the masked pixels are replaced.
 While N2S directly uses random values, N2V chooses the replacement pixels randomly from local neighbors.
 
-Laine~et al.~\cite{BSN} choose a different approach; instead of relying on masking strategies, they directly manipulate the receptive field by adapting the network architecture itself.
 In Noise2Same~\cite{Noise2Same}, the authors demonstrate that, in practice, both N2V and N2S are not strictly $\mathcal{J}$-invariant and thus conclude that strict $\mathcal{J}$-invariance is not necessary for achieving good denoising performance.
 Therefore, they propose to do without explicit manipulation of the receptive field and instead add a regularization term that encourages the network to learn an approximately $\mathcal{J}$-invariant mapping by itself.
-
+Laine~et al.~\cite{BSN} choose a different approach; instead of relying on masking strategies, they directly manipulate the receptive field by adapting the network architecture itself.
 % XXX add Self2Self

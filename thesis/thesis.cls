@@ -20,6 +20,7 @@
 \usepackage{booktabs}
 \usepackage{amsmath,amssymb}
 \usepackage{mathtools}
+\usepackage{xparse}
 
 % Graphics
 \usepackage{tikz}
@@ -39,16 +40,17 @@
 \newcommand{\C}{\mathbb{C}}
 
 \newcommand{\unormal}{\mathcal{N}(\mathbf{0},\mathbf{I})}
-\newcommand{\normal}[2]{\mathcal{N}(#1,#2)}
+\NewDocumentCommand{\normal}{O{\mathbf{0}} O{\sigma^2\mathbf{I}}}{\mathcal{N}(#1, #2)}
 \newcommand{\fnormal}[3]{\mathcal{N}(#1;#2,#3)}
 
-\newcommand{\E}[1]{\mathbb{E} [#1]}
+\newcommand{\E}[2][ ]{\mathbb{E}_{#1} [#2]}
 \DeclareMathOperator{\Var}{Var}
 
 \DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator*{\argmin}{argmin}
 
-\DeclarePairedDelimiterX{\norm}[1]{\lVert}{\rVert}{#1}
+% \DeclarePairedDelimiterX{\norm}[1]{\lVert}{\rVert}{#1}
+\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
 
 % Avoid widows and orphans
 \clubpenalty = 10000
