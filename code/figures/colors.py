@@ -1,0 +1,5 @@
+RED = '#ba3132'
+BLUE = '#0073c0'
+GREEN = '#00b19d'
+PURPLE = '#ac72b9'
+ORANGE = '#ffc599'

@@ -196,17 +196,19 @@ Formally, the proposed training objective is defined as:
     \theta^*,z^* = \argmin_{\theta, z} \norm{\E[\epsilon]{f_\theta(z + \epsilon)} - y}_2^2 + \lambda\norm{\E[\epsilon]{f_\theta(z + \epsilon)} - z}_2^2,
 \end{equation}
 where $y$ refers to the noisy image, $z$ is a random tensor, $\epsilon$ is Gaussian noise sampled as $\epsilon \sim \normal$ and $\lambda$ is a hyperparameter balancing the two terms.
-The first term enforces data fidelity, while the second term acts as a regularization term, encouraging the network to behave as a denoiser by constraining the output to be close to the learned input $z$, thereby mitigating overfitting. 
-The expectation over the noise distribution helps to stabilize the learned mapping and, in practice, is approximated by averaging the outputs for multiple noise samples.
 Empirically, the authors find that setting $\sigma = \frac{\max(z)}{2}$ yields good results.
+The first term enforces data fidelity, while the second term acts as a regularization term, encouraging the network to behave as a denoiser by constraining the output to be close to the learned input $z$, thereby mitigating overfitting. 
+The expectation over the noise distribution helps to stabilize the learned mapping; the denoised estimate is then obtained as $\hat{x} = \E[\epsilon]{f_\theta(z + \epsilon)}$.
+In practice, the expectation is approximated by averaging the outputs for multiple noise samples.
 
 This objective naturally induces a structured learning process:
 Ideally, the network first learns to capture the general structure of the image.
-Due to the regularization term, both the input and output should provide a reasonable estimate of the clean image.
+Due to the optimization of $z$ and the regularization term, both the input and output should provide a reasonable estimate of the clean image.
 At this stage, vanilla DIP would typically begin to overfit.
 However, in SG-DIP, the regularization term constrains the output from deviating too much from the input, making it costly for the network to fit the noise --- since doing so would introduce global alterations to the output.
 Instead, the network is encouraged to refine the output while staying close to the input, effectively suppressing noise without overfitting.
-To explicitly reinforce this behavior, we propose using a schedule, inspired by DDIP, to gradually increase $\lambda$ throughout training.
+
+To explicitly reinforce this behavior, we propose gradually increasing $\lambda$ throughout training according to a schedule $\lambda = s(t)$, where $t$ denotes the current iteration.
 This approach intuitively divides the optimization process into two phases:
 Initially, both terms in the objective are balanced, allowing the network to extract the general structure of the image. As training progresses and $\lambda$ increases, the regularization term dominates, restricting the model to only minor refinements.
 
@@ -215,15 +217,39 @@ If the regularization term remains too small for an extended period, there is st
 Conversely, if it increases too prematurely, it may hinder further learning before the image structure has been adequately captured.
 To address this issue, we also consider a variant in which we replace the random initialization of $z$ with the noisy image $y$.
 Note that the two loss terms are still different, as $z$ is optimized throughout training, while $y$ stays constant.
-This modification facilitates the network's ability to learn the primary structure of the image. 
+This modification, which we term Self-Guided Refinement Deep Image Prior (SGR-DIP), facilitates the network's ability to learn the primary structure of the image. 
 However, we observe that it necessitates an increase in the variance of the noise added to $z$ to prevent the network from merely learning the identity function.
 The overall training objective is illustrated in Figure~\ref{fig:SG-DIP}.
 
-% TODO figure: objective
 \begin{figure}
     \centering
-    \begin{tikzpicture}
-        \draw (0,0) -- (0,1);
+    \begin{tikzpicture}[scale=1]
+        \node[anchor=south west,inner sep=0,label=above:{$z$}] (z) at (0,0) {\includegraphics[width=2cm]{img/fig_4.3_y.png}};
+        \node[anchor=south west,draw,fill=gray!10,rounded corners,minimum height=2cm,minimum width=1cm] (f) at (3,0) {$f_\theta$};
+        \node[anchor=south west,inner sep=0,label=above:{$\hat{x}$}] (x) at (5,0) {\includegraphics[width=2cm]{img/fig_4.3_x.png}};
+        \node[anchor=south west,inner sep=0,label=above:{$y$}] (y) at (8,0) {\includegraphics[width=2cm]{img/fig_4.3_y.png}};
+        \node[anchor=south west,draw,fill=gray!10,rounded corners,minimum width=2cm,minimum height=0.7cm] (e) at (0,3) {\tiny $\epsilon \sim \normal$};
+        \node[anchor=north west,draw,fill=gray!10,rounded corners,minimum width=2cm,minimum height=0.7cm] (s) at (0,-1) {\tiny $\lambda = s(t)$};
+        \node[anchor=north west,draw,thick,rounded corners,minimum width=1.5cm,minimum height=0.7cm] (l2) at (3,-1) {$R$};
+        \node[anchor=north east,draw,thick,rounded corners,minimum width=1.5cm,minimum height=0.7cm] (l1) at (7,-1) {$L$};
+
+        \draw (z.east) -- (f.west);
+        \draw[->] (e.east) to[out=0, in=180] (f.west);
+        \draw[->] (f.east) -- (x.west);
+        \draw[->] (s.east) -- (l2.west);
+        \draw[->] (z.south) to[out=-90, in=90] (l2.north);
+        \draw (x.south) to[out=-90, in=90] (l2.north);
+        \draw[->] (x.south) to[out=-90, in=90] (l1.north);
+        \draw (y.south) to[out=-90, in=90] (l1.north);
+
     \end{tikzpicture}
-    \caption{SG-DIP objective.}\label{fig:SG-DIP}
+    \caption{
+        Overview of our adapted SGR-DIP training objective.
+        The network input is the sum of $z$ (which equals $y$ in the first iteration) and noise sampled from a Gaussian distribution.
+        The overall loss consists of two terms: a data fidelity term $L$ and a regularization term $R$.
+        $L$ measures the difference between the network output and the noisy image, $R$ ensures that the output stays close to the input.
+        The influence of $R$ increases over time through a schedule $s(t)$.
+    }\label{fig:SG-DIP}
 \end{figure}
+
+% XXX figure: schedule plot (linear, cosine) - figure order?
