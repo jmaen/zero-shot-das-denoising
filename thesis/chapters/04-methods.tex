@@ -147,7 +147,7 @@ where $\lambda$ is a hyperparameter controlling the strength of the TV regulariz
 
 \section{Deep Diffusion Image Prior}
 
-% XXX figure forward/reverse process (see DDPM)
+% XXX figure: forward/reverse process (see DDPM)
 
 % TODO add sources
 Diffusion models~\cite{Diffusion} have emerged as a powerful class of generative models, achieving state-of-the-art performance in various applications, including image synthesis, denoising, and inverse problems. The key idea is to transform complex data distributions into simple ones (such as Gaussian noise) via a forward stochastic process and then train a model to approximate the reverse process.
@@ -183,7 +183,7 @@ As both $z$ and $x_t$ are distributed according to $\unormal$ for $t=T$, they pr
 In practice, DDIP uses a pre-trained diffusion model as $f_\theta$ and adapts the underlying prior distribution using LoRA~\cite{LoRA} --- optimizing only a small set of additional parameters.
 However, since this work focuses strictly on zero-shot methods, we consider using a completely untrained network, as $f_\theta(x_t)$ can still be seen as an estimate of $x_0$ after a sufficient number of initial iterations.
 
-% XXX schedule details
+% XXX DDIP schedule details
 % different schedules, sqrt -> keep variance from exploding
 % leave out normalization -> interpolation in image space
 
@@ -206,9 +206,24 @@ Due to the regularization term, both the input and output should provide a reaso
 At this stage, vanilla DIP would typically begin to overfit.
 However, in SG-DIP, the regularization term constrains the output from deviating too much from the input, making it costly for the network to fit the noise --- since doing so would introduce global alterations to the output.
 Instead, the network is encouraged to refine the output while staying close to the input, effectively suppressing noise without overfitting.
-To explicitly reinforce this behavior, we propose using a scheduler, inspired by DDIP, to gradually increase $\lambda$ throughout training.
+To explicitly reinforce this behavior, we propose using a schedule, inspired by DDIP, to gradually increase $\lambda$ throughout training.
 This approach intuitively divides the optimization process into two phases:
 Initially, both terms in the objective are balanced, allowing the network to extract the general structure of the image. As training progresses and $\lambda$ increases, the regularization term dominates, restricting the model to only minor refinements.
 
-% TODO use y as input to simplify initial signal extraction (increase \epsilon variance to prevent learning identity)
-% TODO figures - process / schedules?
+We observe that the addition of the schedule improves denoising performance; however, we note that the effectiveness of this approach is highly dependent on the specific configuration of the schedule implemented.
+If the regularization term remains too small for an extended period, there is still a risk of overfitting.
+Conversely, if it increases too prematurely, it may hinder further learning before the image structure has been adequately captured.
+To address this issue, we also consider a variant in which we replace the random initialization of $z$ with the noisy image $y$.
+Note that the two loss terms are still different, as $z$ is optimized throughout training, while $y$ stays constant.
+This modification facilitates the network's ability to learn the primary structure of the image. 
+However, we observe that it necessitates an increase in the variance of the noise added to $z$ to prevent the network from merely learning the identity function.
+The overall training objective is illustrated in Figure~\ref{fig:SG-DIP}.
+
+% TODO figure: objective
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \draw (0,0) -- (0,1);
+    \end{tikzpicture}
+    \caption{SG-DIP objective.}\label{fig:SG-DIP}
+\end{figure}

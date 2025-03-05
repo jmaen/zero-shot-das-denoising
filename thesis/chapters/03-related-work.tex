@@ -112,8 +112,7 @@ In order to allow efficient training, they approximate this behavior by training
 In Noise2Self (N2S)~\cite{N2S}, Batson~et al.\ generalize this concept to sets of variables, instead of single pixels only, by introducing the notion of $\mathcal{J}$-invariance.
 For a noisy input image~$y \in \R^m$, let $\mathcal{J}$ be a partition of the dimensions $\{1,\dots,m\}$.
 For a subset of the dimensions~$J \in \mathcal{J}$, $x_J$ denotes $x$ restricted to the dimensions $J$.
-A function $f: \R^m \rightarrow \R^m$ is said to be $\mathcal{J}$-invariant if, for each $J \in \mathcal{J}$, $f(x)_J$ does not depend on $x_J$, i.e.,
-% TODO not orthogonal instead of equal?
+A function $f: \R^m \rightarrow \R^m$ is said to be $\mathcal{J}$-invariant if, for each $J \in \mathcal{J}$, $f(x)_J$ does not depend on $x_J$, which implies that
 \begin{equation}
     f(x)_J = f(x_{J^c})_J,
 \end{equation}

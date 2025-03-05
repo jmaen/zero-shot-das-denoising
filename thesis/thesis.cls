@@ -49,6 +49,7 @@
 \DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator*{\argmin}{argmin}
 
+% TODO switch to manual sizing
 % \DeclarePairedDelimiterX{\norm}[1]{\lVert}{\rVert}{#1}
 \newcommand{\norm}[1]{\left\lVert#1\right\rVert}
 

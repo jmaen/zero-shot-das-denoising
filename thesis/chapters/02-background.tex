@@ -84,13 +84,12 @@ where $\mathbf{x} \in \R^n$ is the input, $\mathbf{W} \in \R^{m \times n}$ is a 
 The outputs of each layer are then passed as inputs to the next layer, which is why this architecture is known as a fully-connected neural network. 
 The activation functions are needed in order to avoid the network collapsing into a single linear transformation. 
 Therefore, a neural network can be described as a function~$f_{\theta}: \mathcal{X} \rightarrow \mathcal{Y}$ parameterized by $\theta$, where $\theta$ represents the weights and biases across all layers~\cite{DeepLearning}.
-% TODO explain targets better
-In order to optimize these parameters, a loss function~$L: \mathcal{Y} \times \mathcal{Y} \rightarrow \R$ is defined, which measures the difference between the predicted output and the target value. 
-Now, the gradient of the loss function with respect to the parameters, $\nabla_\theta L = \frac{\partial L}{\partial \theta}$, represents the direction of steepest ascent.
+In order to optimize these parameters, a loss function~$L: \mathcal{Y} \times \mathcal{Y} \rightarrow \R$ is defined to measure the discrepancy between the predicted output $\hat{y} = f_\theta(x)$ and the target value $y$. 
+Since $\hat{y}$ depends on $\theta$, the loss $L(\hat{y}, y)$ is implicitly a function of $\theta$.
+The gradient of the loss function with respect to the parameters, $\nabla_\theta L = \frac{\partial L}{\partial \theta}$, represents the direction of steepest ascent.
 Therefore, by moving the parameters in the opposite direction of the gradient, the loss function can be minimized.
 Typically, the gradient is not calculated for a single data point or for the whole dataset, but instead for a small subset of the dataset, which is why this approach is referred to as (mini-batch) gradient descent.
 Backpropagation~\cite{Backpropagation} is used to efficiently compute the gradient by making use of the chain rule, enabling fast optimization.
-
 While traditionally neural networks only consisted of a few layers and required hand-crafted features to work effectively, advances in computing power allow modern architectures to automate feature extraction by using additional layers, hence the term \textit{deep} neural network.
 
 \subsection{Convolutional Neural Networks}
@@ -222,5 +221,4 @@ where $\sigma$ denotes the Sigmoid activation function, $\mathbf{K} \in \R^{1,k}
 \end{equation}
 This mechanism allows ECA to improve performance while being more efficient than predecessors like squeeze-and-excitation networks~\cite{SqueezeExcite}, which rely on more expensive fully-connected layers.
 
-\section{Fourier Transform}
-% XXX add fourier
+% XXX add fourier transform
