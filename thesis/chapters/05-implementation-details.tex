@@ -1,5 +1,8 @@
 \chapter{Implementation Details}
 
+Building on the methods described in the previous chapter, this chapter focuses on the practical aspects of our work.
+Specifically, it covers the architecture design, evaluation metrics, datasets, and preprocessing steps used in our experiments.
+
 \section{Architecture}
 
 \begin{wrapfigure}{r}{0.48\textwidth}
@@ -46,8 +49,82 @@ Optimization is performed using the Adam optimizer~\cite{Adam} with a learning r
     }\label{fig:architecture}
 \end{figure}
 
+\newpage
+
 \section{Metrics}
 
+To evaluate and compare the performance of different denoising methods, we rely on two widely used image quality metrics: Peak Signal-to-Noise Ratio (PSNR) and Structural Similarity Index Measure (SSIM).
+
+\subsection{Peak Signal-to-Noise Ratio}
+
+PSNR is a standard metric used to quantify the reconstruction quality of an image by measuring the ratio between the maximum possible pixel intensity and the mean squared error (MSE) between the original and denoised images, $x, \hat{x} \in \R^{W \times H}$.
+It is defined as:
+\begin{equation}
+    \text{PSNR}(x,\hat{x}) = 10 \cdot \log_{10} \left(\frac{x_{\text{max}}^2}{\text{MSE}(x,\hat{x})}\right),
+\end{equation}
+where $x_{\text{max}}$ is the maximum possible pixel intensity.
+For a normalized image, $x_{\text{max}} = 1$, therefore we obtain the simplified definition
+\begin{equation}\label{eq:PSNR}
+    \text{PSNR}(x,\hat{x}) = 10 \cdot \log_{10} \left(\frac{1}{\text{MSE}}\right) = -10 \cdot \log_{10}(\text{MSE}(x,\hat{x})),
+\end{equation}
+where the MSE is given by
+\begin{equation}\label{eq:MSE}
+    \text{MSE}(x,\hat{x}) = \frac{1}{W \cdot H} \sum_{i=1}^{W} \sum_{j=1}^{H} (x_{i,j} - \hat{x}_{i,j})^2.
+\end{equation}
+For color images with dimensions $3 \times W \times H$, the MSE is additionally computed across the 3 color channels.
+
+A higher PSNR value indicates better image quality, with less distortion introduced by the denoising process.
+However, PSNR is a pixel-wise metric that does not account for perceptual quality, therefore we also consider the SSIM\@.
+
+\subsection{Structural Similarity Index Measure}
+
+SSIM~\cite{SSIM} is designed to assess perceptual similarity between images by considering structural information, contrast, and luminance. It is computed as:
+\begin{equation}
+\text{SSIM}(x, \hat{x}) = \frac{(2\mu_x \mu_{\hat{x}} + c_1)(2\sigma_{x\hat{x}} + c_2)}{(\mu_x^2 + \mu_{\hat{x}}^2 + c_1)(\sigma_x^2 + \sigma_{\hat{x}}^2 + c_2)}
+\end{equation}
+where $\mu_x$ and $\mu_{\hat{x}}$ are the mean intensities of the original and denoised images, $\sigma_x^2$ and $\sigma_{\hat{x}}^2$ are their variances, and $\sigma_{x\hat{x}}$ is the covariance between them.
+The constants $c_1$ and $c_2$ stabilize the division, preventing numerical instabilities when the denominator is close to zero.
+SSIM values range from -1 to 1, with higher values indicating better structural similarity.
+Unlike PSNR, SSIM is more aligned with human perception, making it a crucial metric for evaluating image denoising performance.
+
 \section{Datasets}
+
+This section describes the datasets used in our experiments for both image and distributed acoustic sensing (DAS) data.
+
+\subsection{Image Datasets}
+
+We use three standard image datasets commonly employed for image denoising tasks:
+\begin{itemize}
+    \item \textbf{Set14}~\cite{Set14}: A small dataset consisting of 14 images, widely used for evaluating image restoration algorithms.
+    \item \textbf{CBSD68}~\cite{CBSD68}: A dataset containing 68 natural images from the Berkeley segmentation dataset, commonly used for benchmarking denoising methods.
+    \item \textbf{CelebA}~\cite{CelebA}: A large-scale face dataset with over 200,000 images, useful for evaluating denoising performance on human faces.
+\end{itemize}
+
+To generate a noisy image $\hat{x}$ from a clean image $x$ at a predefined PSNR level, we add Gaussian noise $n \sim \normal$, where $\sigma^2$ is determined by the desired PSNR\@.
+Because the noise is additive, substituting $\hat{x} = x + n$ into Equation~\ref{eq:MSE} simplifies it to
+\begin{equation}
+    \text{MSE}(x,\hat{x}) = \frac{1}{W \cdot H} \sum_{i=1}^{W} \sum_{j=1}^{H} n_{i,j}^2.
+\end{equation}
+Since the noise is also zero-mean, we approximate $\sigma^2 \approx \text{MSE}$.
+Rewriting Equation~\ref{eq:PSNR} in terms of MSE, we get
+\begin{equation}
+    \text{MSE}(x,\hat{x}) = 10^{-\frac{\text{PSNR}(x,\hat{x})}{10}}.
+\end{equation}
+For a given PSNR value, we can therefore obtain a corresponding noisy image as
+\begin{equation}
+    \hat{x} = x + \sigma\epsilon, \quad \epsilon \sim \unormal,
+\end{equation}
+where $\sigma = \sqrt{10^{-\frac{\text{PSNR}(x,\hat{x})}{10}}}$.
+
+\subsection{Distributed Acoustic Sensing Datasets}
+
+For denoising DAS data, we use data from two real-world experiments:
+\begin{itemize}
+    \item \textbf{SISSLE}~\cite{SISSLE}: The South Island Seismology at the Speed of Light Experiment near Haast, New Zealand.
+    \item \textbf{FORGE}~\cite{FORGE}: The Frontier Observatory for Research in Geothermal Energy in Utah.
+\end{itemize}
+Exact sources for the samples used in our experiments can be found in the supplementary material.
+
+% XXX synth data
 
 \section{Preprocessing}

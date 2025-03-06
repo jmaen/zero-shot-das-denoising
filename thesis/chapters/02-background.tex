@@ -10,9 +10,9 @@ Finally, we present key deep learning concepts and techniques that are used in t
 In general, denoising refers to the process of recovering a clean signal from a noisy observation.
 This is commonly framed as an inverse problem (IP), formally described by
 \begin{equation}
-    y = \mathcal{A}(x) + \epsilon,
+    y = \mathcal{A}(x) + n,
 \end{equation}
-where $y$ is the noisy observation, $x$ is the underlying clean signal $\mathcal{A}$ refers to any forward operator and $\epsilon$ represents some form of noise, for example Gaussian noise~$\epsilon \sim \unormal$.
+where $y$ is the noisy observation, $x$ is the underlying clean signal $\mathcal{A}$ refers to any forward operator and $n$ represents some form of noise, for example Gaussian noise~$n \sim \normal$.
 In denoising problems, $\mathcal{A}$ is simply the identity operator.
 Since both the noise and its distribution are often unknown, denoising is an inherently ill-posed problem, as multiple solutions can explain the same noisy data.
 Therefore, additional assumptions or constraints on the solution space are necessary, a process typically referred to as regularization.
@@ -217,7 +217,7 @@ For an output~$\mathbf{X} \in \R^{C \times W \times H}$ of a convolutional layer
 \end{equation}
 where $\sigma$ denotes the Sigmoid activation function, $\mathbf{K} \in \R^{1,k}$ is a 1D-kernel with the kernel size $k$ adaptively calculated based on $C$, and $g(\mathbf{x})$ represents channel-wise global average pooling:
 \begin{equation}
-    g(\mathbf{X}) = \frac{1}{WH} \sum_{i=1}^{W} \sum_{j=1}^{H} \mathbf{X}_{i,j}.
+    g(\mathbf{X}) = \frac{1}{W \cdot H} \sum_{i=1}^{W} \sum_{j=1}^{H} \mathbf{X}_{i,j}.
 \end{equation}
 This mechanism allows ECA to improve performance while being more efficient than predecessors like squeeze-and-excitation networks~\cite{SqueezeExcite}, which rely on more expensive fully-connected layers.
 

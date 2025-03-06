@@ -31,10 +31,10 @@ Although N2N is often impractical in practice because the required noisy-noisy p
 
 Self-supervised methods are trained similarly to traditional supervised methods, but they do not rely on externally-provided target values.
 In the context of denoising, these approaches can be broadly categorized into two main strategies:
-N2N-based methods use a training objective similar to the one given by Equation~(\ref{eq:N2N}); however they generate their own noisy-noisy training pairs from individual noisy inputs.
+Noise2Noise-based methods use a training objective similar to the one given by Equation~(\ref{eq:N2N}); however they generate their own noisy-noisy training pairs from individual noisy inputs.
 Blind-spot-based methods, on the other hand, exploit spatial correlations in the image using different masking strategies, either in the input or in the network architecture itself.
 
-\subsection{N2N-Based Methods}
+\subsection{Noise2Noise-Based Methods}
 
 Noisier2Noise~\cite{Noisier2Noise} builds upon N2N, but unlike N2N, it does not require a set of paired noisy-noisy images.
 Instead, it constructs these training pairs from individual noisy images only.
