@@ -128,3 +128,29 @@ Exact sources for the samples used in our experiments can be found in the supple
 % XXX synth data
 
 \section{Preprocessing}
+
+This section discusses preprocessing steps applied to the input before passing it to DIP-based methods.
+For image data, no specific preprocessing is needed.
+After generating noisy samples as described in the last section, we simply standardize the inputs to zero mean and unit variance.
+
+For DAS data, however, appropriate preprocessing is crucial for the success of DIP-based methods.
+As discussed in Section~\ref{sec:DAS}, noise in DAS measurements often exhibits a grid-like structure, mainly due to erratic and common mode noise.
+This structured noise is repetitive and spatially correlated, and therefore inherently easy to learn for a convolutional network, which contradicts a key assumption of DIP --- that meaningful signal is learned faster than noise.
+To mitigate this issue, following~\cite{IDF}, we first apply a low-pass filter with a high-cut frequency of 200\,Hz.
+To further remove common mode noise, we subtract the time-wise median from the filtered signal.
+
+Another challenge arises due to the large variations in amplitude within DAS measurements.
+DIP-based methods, particularly SG-DIP, tend to focus on high-amplitude regions while neglecting lower-amplitude parts.
+To address this, we propose using a local normalization approach.
+Specifically, we divide the input into overlapping local regions and compute the mean and standard deviation within each window.
+Each region is then normalized independently to have zero mean and unit variance:
+\begin{equation}
+    x'_{i,j} = \frac{x_{i,j} - \mu_{i,j}}{\sigma_{i,j}},
+\end{equation}
+where $\mu_{i,j}$ and $\sigma_{i,j}$ are the mean and standard deviation computed within a local window centered at $(i,j)$.
+In practice, we use a window size of $32 \times 32$.
+
+After DIP-based processing, we rescale the output using the stored local mean and standard deviation to restore the original amplitude relationships.
+The different preprocessing steps and their corresponding denoised results are visualized in Figure~\ref{fig:preprocessing}.
+
+% TODO figure: 4x2 grid | top - inputs (noisy, filtered, median, reweighted); bottom - corresponding results
