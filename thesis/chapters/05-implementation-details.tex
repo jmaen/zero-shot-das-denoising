@@ -151,6 +151,14 @@ where $\mu_{i,j}$ and $\sigma_{i,j}$ are the mean and standard deviation compute
 In practice, we use a window size of $32 \times 32$.
 
 After DIP-based processing, we rescale the output using the stored local mean and standard deviation to restore the original amplitude relationships.
-The different preprocessing steps and their corresponding denoised results are visualized in Figure~\ref{fig:preprocessing}.
+The different preprocessing steps are visualized in Figure~\ref{fig:preprocessing}.
 
-% TODO figure: 4x2 grid | top - inputs (noisy, filtered, median, reweighted); bottom - corresponding results
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{img/fig_5.3.png}
+    \caption{
+        Different preprocessing steps.
+        The noisy input is first normalized by its standard deviation.
+        The following measurements are then obtained by sequentially applying the specified operations.
+    }\label{fig:preprocessing}
+\end{figure}

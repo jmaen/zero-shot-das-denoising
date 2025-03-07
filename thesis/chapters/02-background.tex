@@ -82,7 +82,7 @@ The output of a single layer is given by
 \end{equation}
 where $\mathbf{x} \in \R^n$ is the input, $\mathbf{W} \in \R^{m \times n}$ is a weight matrix, $\mathbf{b} \in \R^m$ is a bias vector and $\varphi$ is an activation function applied element-wise, such as the Sigmoid or ReLU~\cite{ReLU}.
 The outputs of each layer are then passed as inputs to the next layer, which is why this architecture is known as a fully-connected neural network. 
-The activation functions are needed in order to avoid the network collapsing into a single linear transformation. 
+Activation functions are necessary to prevent the network from reducing to a single linear transformation, ensuring that it can learn complex, non-linear representations.
 Therefore, a neural network can be described as a function~$f_{\theta}: \mathcal{X} \rightarrow \mathcal{Y}$ parameterized by $\theta$, where $\theta$ represents the weights and biases across all layers~\cite{DeepLearning}.
 In order to optimize these parameters, a loss function~$L: \mathcal{Y} \times \mathcal{Y} \rightarrow \R$ is defined to measure the discrepancy between the predicted output $\hat{y} = f_\theta(x)$ and the target value $y$. 
 Since $\hat{y}$ depends on $\theta$, the loss $L(\hat{y}, y)$ is implicitly a function of $\theta$.
@@ -189,14 +189,14 @@ During the training process, the inputs of each layer change with each iteration
 That slows down the training because now each layer has to adapt to the new distribution of its inputs. This process is often referred to as internal covariate shift.
 To counteract this issue, Ioffe~et al.\ propose Batch Normalization (BN)~\cite{BatchNorm}.
 The idea behind BN is to normalize the inputs across the whole mini-batch and their spatial dimensions.
-The normalized input for a channel $i$ is given by
+The normalized input for a channel $c$ is given by
 \begin{equation}
-    \hat{x}^{(i)} = \frac{x^{(i)} - \mu^{(i)}}{\sigma^{(i)}},
+    \hat{x}_c = \frac{x_c - \mu_c}{\sigma_c},
 \end{equation} 
-where $\mu^{(i)}$ and $\sigma^{(i)}$ are the per-channel mean and standard deviation of the mini-batch, respectively.  
+where $\mu_c$ and $\sigma_c$ are the per-channel mean and standard deviation of the mini-batch, respectively.  
 In order to allow the model to learn the identity if that were the optimal transformation, two additional learnable parameters, $\gamma$ and $\beta$, are introduced. The output of the BN layer is then defined as
 \begin{equation}
-    y^{(i)} = \gamma^{(i)}\hat{x}^{(i)} + \beta^{(i)}.
+    y_c = \gamma_c\hat{x}_c + \beta_c.
 \end{equation}
 Since there are no batch statistics available at inference time, BN keeps track of the running mean and variance during training and uses these values for normalization.
 While BN is widely used, there exist various similar normalization techniques~\cite{LayerNorm, InstanceNorm, GroupNorm} mainly differing in the dimensions across which they are applied.
@@ -211,14 +211,12 @@ This works by dynamically reweighting the features based on their importance~\ci
 While attention is often associated with natural language processing (NLP), especially since the introduction of the Transformer architecture~\cite{Transformer} where it is the underlying key principle, it also has applications beyond NLP.\@
 In computer vision, for example, it can help CNNs by reweighting feature channels or highlighting important spatial regions.
 One such method is Efficient Channel Attention (ECA), proposed by Wang et al.~\cite{ECA}, which uses global average pooling followed by a lightweight 1D-convolution to dynamically recalibrate feature importance.
-For an output~$\mathbf{X} \in \R^{C \times W \times H}$ of a convolutional layer, where $W$, $H$ and $C$ denote width, height and channel dimension, respectively, the weight of a feature channel $i$ is given by
+For an output~$\mathbf{X} \in \R^{C \times W \times H}$ of a convolutional layer, where $W$, $H$ and $C$ denote width, height and channel dimension, respectively, the weight of a feature channel $c$ is given by
 \begin{equation}
-    \mathbf{w}_i = \sigma(g(\mathbf{X}) \ast \mathbf{K})_i,
+    \mathbf{w}_c = \sigma(g(\mathbf{X}) \ast \mathbf{K})_c,
 \end{equation}
-where $\sigma$ denotes the Sigmoid activation function, $\mathbf{K} \in \R^{1,k}$ is a 1D-kernel with the kernel size $k$ adaptively calculated based on $C$, and $g(\mathbf{x})$ represents channel-wise global average pooling:
+where $\sigma$ denotes the Sigmoid activation function, $\mathbf{K} \in \R^{1,k}$ is a 1D-kernel with the kernel size $k$ adaptively calculated based on $C$, and $g(\mathbf{X})$ represents channel-wise global average pooling:
 \begin{equation}
-    g(\mathbf{X}) = \frac{1}{W \cdot H} \sum_{i=1}^{W} \sum_{j=1}^{H} \mathbf{X}_{i,j}.
+    g(\mathbf{X})_c = \frac{1}{W \cdot H} \sum_{i=1}^{W} \sum_{j=1}^{H} \mathbf{X}_{c,i,j}.
 \end{equation}
 This mechanism allows ECA to improve performance while being more efficient than predecessors like squeeze-and-excitation networks~\cite{SqueezeExcite}, which rely on more expensive fully-connected layers.
-
-% XXX add fourier transform
