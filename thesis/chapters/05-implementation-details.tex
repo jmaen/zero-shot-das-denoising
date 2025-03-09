@@ -42,9 +42,8 @@ Optimization is performed using the Adam optimizer~\cite{Adam} with a learning r
     \includegraphics[width=\textwidth]{img/fig_5.2.pdf}
     \caption{
         Architecture used in our experiments.
-        Each blue box corresponds to a multi-channel feature map.
-        White boxes represent copied feature maps, reweighted using ECA\@.
-        Different colored arrows represent different operations, visualized in detail in the boxes below.
+        Each blue box corresponds to a multi-channel feature map, while white boxes represent copied feature maps, reweighted using ECA\@.
+        Different colored arrows denote various operations, detailed in the boxes below (e.g., gray for convolution blocks, red for downsampling blocks, etc.).
         Figure adapted from~\cite{U-Net} and~\cite{DIP}.
     }\label{fig:architecture}
 \end{figure}
@@ -84,7 +83,7 @@ SSIM~\cite{SSIM} is designed to assess perceptual similarity between images by c
 \end{equation}
 where $\mu_x$ and $\mu_{\hat{x}}$ are the mean intensities of the original and denoised images, $\sigma_x^2$ and $\sigma_{\hat{x}}^2$ are their variances, and $\sigma_{x\hat{x}}$ is the covariance between them.
 The constants $c_1$ and $c_2$ stabilize the division, preventing numerical instabilities when the denominator is close to zero.
-SSIM values range from -1 to 1, with higher values indicating better structural similarity.
+SSIM values range from 0 to 1, with higher values indicating better structural similarity.
 Unlike PSNR, SSIM is more aligned with human perception, making it a crucial metric for evaluating image denoising performance.
 
 \section{Datasets}

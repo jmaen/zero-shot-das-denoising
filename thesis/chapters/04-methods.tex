@@ -104,31 +104,30 @@ However, such a fixed stopping point is not ideal because the optimal stopping p
     \includegraphics[width=\textwidth]{img/fig_4.2.png}
     \caption{
         Early stopping via windowed moving variance on different datasets and noise levels.
-        Image quality is evaluated on 20 random images from the CelebA~\cite{CelebA} (left) and CBSD68~\cite{CBSD68} (right) datasets, with Gaussian noise added at specified levels.
+        Image quality is evaluated on 20 random images from the CelebA~\cite{CelebA} (left) and CBSD68~\cite{CBSD68} (right) datasets, with Gaussian noise added at specified PSNR levels.
         The blue line represents the mean PSNR, the light blue shaded area indicates the standard deviation.
         The red line marks the average detected stopping point.
     }\label{fig:early-stopping}
 \end{figure}
 
-The process of halting the training to mitigate overfitting is known as early stopping (ES).
-As discussed earlier, a fixed stopping point generally will not work well.
-Therefore, we need to find a way to dynamically detect optimal stopping points during training.
-In principle, if the clean ground-truth image $x$ were available, this would be trivial:
-One could simply track image quality using an appropriate metric, e.g., PSNR or SSIM, and stop training at its peak.
+The process of halting training to mitigate overfitting is known as early stopping (ES).
+As discussed earlier, a fixed stopping point generally does not work well, so we need to find a way to dynamically detect optimal stopping points during training.
+If the clean ground-truth image $x$ were available, one could simply track image quality using an appropriate metric, e.g., PSNR or SSIM, and stop training at its peak.
 However, since $x$ is inherently unknown in the denoising setting, we need an alternative criterion to determine when to stop.
+Some image quality metrics do not require a clean reference~\cite{BRISQUE}, but they are not very effective for early stopping.
 
-Wang et al.~\cite{ES} propose such a criterion based on the running variance of the DIP reconstructions over time.
+Wang et al.~\cite{ES} instead propose a criterion based on the running variance of the DIP reconstructions over time.
 Let $\{x_t\}_{t \geq 1}$ denote the sequence of the respective denoised estimates $x_t = f_{\theta_t}(z)$ at iteration $t$.
 The authors observe that the MSE $\norm{x_t-x}_F^2$ initially drops as the networks learns the image structure, and then rises again due to overfitting to noise, leading to a U-shaped curve.
-However, once again, $x$ is unknown in practice, so the goal is to detect the minimum of said curve without access to $x$.
+The challenge remains to detect the minimum of said curve without access to $x$.
 To achieve this, they consider the running variance over a window of $W$ iterations, given by
 \begin{equation}\label{eq:Var}
     \Var(t) = \frac{1}{W} \sum_{w=0}^{W-1} \norm{x_{t+w}-\frac{1}{W} \sum_{i=0}^{W-1} x_{t+i}}_F^2.
 \end{equation}
 Intuitively, when $t$ is near the optimal stopping point, $x_t$ should be close to $x$, leading to $\frac{1}{W} \sum_{w=0}^{W} x_t \approx x$.
 Plugging this back into Equation~(\ref{eq:Var}), we see that when $t$ is near the optimum, $\Var(t)$ approximates the average MSE across the window.
-Therefore, they propose using the minimum of the variance curve to determine the stopping point.
-To improve robustness, they introduce a patience parameter $P$, allowing the variance to stagnate for up to $P$ iterations before stopping.
+Therefore, they propose using the variance curve's minimum as the stopping point.
+To improve robustness, a patience parameter $P$ allows the variance to stagnate for up to $P$ iterations before stopping.
 This approach, termed early stopping via windowed moving variance (ES-WMV), is effective across different noise levels and types of images, as demonstrated in Figure~\ref{fig:early-stopping}. 
 
 \subsection{Total Variation}
@@ -161,12 +160,12 @@ A key property of this process is that it admits a closed-form solution at arbit
 \begin{equation}
     q(x_t \mid x_0) = \fnormal{x_t}{\sqrt{\bar{\alpha}_t} x_0}{(1-\bar{\alpha}_t) \mathbf{I}},
 \end{equation}
-where $\bar{\alpha}_t = \prod_{s=1}^{t} (a - \beta_s)$ is the cumulative noise factor.
+where $\bar{\alpha}_t = \prod_{s=1}^{t} (1 - \beta_s)$ is the cumulative noise factor.
 Using the reparameterization trick~\cite{VAE}, this can be expressed as
 \begin{equation}
     x_t = \sqrt{\bar{\alpha}_t}x_0 + \sqrt{1-\bar{\alpha}_t}\epsilon, \quad \epsilon \sim \unormal.
 \end{equation}
-In DDPMs~\cite{DDPM}, a simple linear schedule for $\beta_t$ is used. In IDDPM~\cite{IDDPM} an improved cosine noise schedule is introduced, which better balances noise levels across timesteps and leads to higher sample quality.
+In DDPMs~\cite{DDPM}, a simple linear schedule for $\beta_t$ is used. Nichol et al.~\cite{IDDPM} propose an improved cosine noise schedule, which better balances noise levels across timesteps and leads to higher sample quality.
 The goal of the diffusion model is to learn the reverse process, parameterized by a neural network, which iteratively removes noise:
 \begin{equation}
     p_\theta(x_{t-1} \mid x_t) = \fnormal{x_{t-1}}{\mu_\theta(x_t, t)}{\beta_t \mathbf{I}},
