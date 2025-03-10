@@ -18,6 +18,7 @@
 \usepackage{graphicx}
 \usepackage[labelfont=bf]{caption}
 \usepackage{booktabs}
+\usepackage{multirow}
 \usepackage{amsmath,amssymb}
 \usepackage{mathtools}
 \usepackage{xparse}

@@ -136,7 +136,7 @@ Another way to prevent overfitting is to incorporate an additional explicit regu
 TV encourages piecewise smoothness by penalizing abrupt intensity changes in the image.
 Formally, for an image $x \in \R^{W \times H}$, it is defined as
 \begin{equation}
-    \text{TV}(x) = \sum_{i=1}^{W-1} \sum_{j=1}^{H-1} (|x_{i+1,j} - x_{i,j}| + |x_{i,j+1} - x_{i,j}|).
+    \text{TV}(x) = \frac{1}{W \cdot H} \sum_{i=1}^{W-1} \sum_{j=1}^{H-1} (|x_{i+1,j} - x_{i,j}| + |x_{i,j+1} - x_{i,j}|).
 \end{equation}
 Liu et al.\ propose combining the implicit network regularization of DIP with an explicit TV regularizer, leading to the method known as DIP-TV~\cite{DIP-TV}.
 This results in the following optimization problem:
@@ -182,10 +182,10 @@ As both $z$ and $x_t$ are distributed according to $\unormal$ for $t=T$, they pr
 \end{align}
 In practice, DDIP uses a pre-trained diffusion model as $f_\theta$ and adapts the underlying prior distribution using LoRA~\cite{LoRA} --- optimizing only a small set of additional parameters.
 However, since this work focuses strictly on zero-shot methods, we consider using a completely untrained network, as $f_\theta(x_t)$ can still be seen as an estimate of $x_0$ after a sufficient number of initial iterations.
-
-% XXX DDIP schedule details
-% different schedules, sqrt -> keep variance from exploding
-% leave out normalization -> interpolation in image space
+Furthermore, we use a modified cosine schedule: 
+\begin{equation}
+    \bar{\alpha}_t = 0.8\cos\left(\frac{t}{T}\cdot\frac{\pi}{2}\right)^2+0.1.
+\end{equation}
 
 \section{Self-Guided Deep Image Prior}
 
@@ -211,20 +211,21 @@ Instead, the network is encouraged to refine the output while staying close to t
 To explicitly reinforce this behavior, we propose gradually increasing $\lambda$ throughout training according to a schedule $\lambda = s(t)$, where $t$ denotes the current iteration.
 This approach intuitively divides the optimization process into two phases:
 Initially, both terms in the objective are balanced, allowing the network to extract the general structure of the image. As training progresses and $\lambda$ increases, the regularization term dominates, restricting the model to only minor refinements.
+Therefore, we term this modification Self-Guided Refinement Deep Image Prior (SGR-DIP).
+The overall training objective is illustrated in Figure~\ref{fig:SGR-DIP}.
 
-We observe that the addition of the schedule improves denoising performance; however, we note that the effectiveness of this approach is highly dependent on the specific configuration of the schedule implemented.
+We observe that the addition of the schedule improves denoising performance; however, we note that the effectiveness of this approach is highly dependent on the specific configuration of the schedule implemented, especially on DAS data.
 If the regularization term remains too small for an extended period, there is still a risk of overfitting.
 Conversely, if it increases too prematurely, it may hinder further learning before the image structure has been adequately captured.
 To address this issue, we also consider a variant in which we replace the random initialization of $z$ with the noisy image $y$.
 Note that the two loss terms are still different, as $z$ is optimized throughout training, while $y$ stays constant.
-This modification, which we term Self-Guided Refinement Deep Image Prior (SGR-DIP), facilitates the network's ability to learn the primary structure of the image. 
+This modification facilitates the network's ability to learn the primary structure of the image. 
 However, we observe that it necessitates an increase in the variance of the noise added to $z$ to prevent the network from merely learning the identity function.
-The overall training objective is illustrated in Figure~\ref{fig:SG-DIP}.
 
 \begin{figure}
     \centering
     \begin{tikzpicture}[scale=1]
-        \node[anchor=south west,inner sep=0,label=above:{$z$}] (z) at (0,0) {\includegraphics[width=2cm]{img/fig_4.3_y.png}};
+        \node[anchor=south west,inner sep=0,label=above:{$z$}] (z) at (0,0) {\includegraphics[width=2cm]{img/fig_4.3_z.png}};
         \node[anchor=south west,draw,fill=gray!10,rounded corners,minimum height=2cm,minimum width=1cm] (f) at (3,0) {$f_\theta$};
         \node[anchor=south west,inner sep=0,label=above:{$\hat{x}$}] (x) at (5,0) {\includegraphics[width=2cm]{img/fig_4.3_x.png}};
         \node[anchor=south west,inner sep=0,label=above:{$y$}] (y) at (8,0) {\includegraphics[width=2cm]{img/fig_4.3_y.png}};
@@ -245,11 +246,11 @@ The overall training objective is illustrated in Figure~\ref{fig:SG-DIP}.
     \end{tikzpicture}
     \caption{
         Overview of our adapted SGR-DIP training objective.
-        The network input is the sum of $z$ (which equals $y$ in the first iteration) and noise sampled from a Gaussian distribution.
+        The network input is the sum of $z$ (which is pure noise in the first iteration) and noise sampled from a Gaussian distribution.
         The overall loss consists of two terms: a data fidelity term $L$ and a regularization term $R$.
         $L$ measures the difference between the network output and the noisy image, $R$ ensures that the output stays close to the input.
         The influence of $R$ increases over time through a schedule $s(t)$.
-    }\label{fig:SG-DIP}
+    }\label{fig:SGR-DIP}
 \end{figure}
 
 % XXX figure: schedule plot (linear, cosine) - figure order?
