@@ -12,10 +12,11 @@ These preliminary evaluations enable a controlled comparison of different method
 For all variants, we follow the original DIP paper and set the maximum number of iterations to 2000.
 For ES-based methods, we employ the ES-WMV criterion with a patience of 500 iterations.
 For DIP-TV, we set $\lambda = 0.1$, and for SG-DIP, we set the number of different noise samples per iteration to 3, as recommended in the original paper.
-
+For SGR-DIP, we linearly increase $\lambda$ from 1 to 10 throughout training. 
 As discussed in Section~\ref{sec:architecture}, we use ECA in the skip connections because it tends to retain more fine-grained details, while yielding almost identical performance, as shown in Table~\ref{tab:ECA}. 
 
 \begin{table}
+    \small
     \centering
     \begin{tabular}{ l l c c }
         \toprule
@@ -30,21 +31,28 @@ As discussed in Section~\ref{sec:architecture}, we use ECA in the skip connectio
     \end{tabular}
     \caption{
         Comparison of different types of skip connections on the Set14 dataset.
-        Noisy input images are generated at a PSNR of 10\,dB.
+        Noisy input images are generated at a PSNR of 15\,dB.
         Values represent mean and {\scriptsize (standard deviation)}.
     }\label{tab:ECA}
 \end{table}
 
+% TODO add DIP-TV (ES) & SG-DIP, fix order
 \begin{figure}
     \centering
-    \includegraphics[width=0.875\textwidth]{img/fig_6.1.png}
+    \includegraphics[width=\textwidth]{img/fig_6.1_0.png}\\
+    \vspace{20pt}
+    \includegraphics[width=\textwidth]{img/fig_6.1_1.png}\\
+    \vspace{20pt}
+    \includegraphics[width=\textwidth]{img/fig_6.1_2.png}
     \caption{
-        Visual comparison of different DIP variants on the CBSD68 dataset.
+        Visual comparison of various DIP variants on the CBSD68 dataset.
         Noisy input images are generated at a PSNR of 15\,dB.
     }\label{fig:CBSD68}
 \end{figure}
 
+% TODO add DIP-TV (ES) & SG-DIP 
 \begin{table}
+    \small
     \centering
     \begin{tabular}{ l c c c }
         \toprule
@@ -54,21 +62,54 @@ As discussed in Section~\ref{sec:architecture}, we use ECA in the skip connectio
         DIP (ES) &25.64 {\scriptsize (2.07)} &0.62 {\scriptsize (0.07)} &\textbf{0.50} {\scriptsize (0.08)} \\
         DIP-TV &26.06 {\scriptsize (1.37)} &0.65 {\scriptsize (0.07)} &1.45 {\scriptsize (0.01)} \\
         DDIP &24.54 {\scriptsize (3.15)} &0.61 {\scriptsize (0.13)} &1.34 {\scriptsize (0.01)} \\
-        SG-DIP (ES) &\underline{26.57} {\scriptsize (2.47)} &\underline{0.69} {\scriptsize (0.09)} & 2.05 {\scriptsize (0.61)} \\
-        SGR-DIP &\textbf{26.76} {\scriptsize (2.51)} &\textbf{0.70} {\scriptsize (0.10)} & 3.34 {\scriptsize (0.09)} \\
+        SG-DIP (ES) &\underline{26.57} {\scriptsize (2.47)} &\underline{0.69} {\scriptsize (0.09)} &2.05 {\scriptsize (0.61)} \\
+        SGR-DIP &\textbf{26.76} {\scriptsize (2.51)} &\textbf{0.70} {\scriptsize (0.10)} &3.34 {\scriptsize (0.09)} \\
         \bottomrule
     \end{tabular}
     \caption{
-        Quantitative comparison of different DIP variants on the CBSD68 dataset.
+        Quantitative comparison of various DIP variants on the CBSD68 dataset (scaled to $256 \times 256$ pixels).
         Noisy input images are generated at a PSNR of 15\,dB.
         Values represent mean and {\scriptsize (standard deviation)}.
     }\label{tab:CBSD68}
 \end{table}
 
-Table~\ref{tab:CBSD68} presents the performance of the different DIP variants discussed in this work in terms of PSNR and SSIM\@.
+Table~\ref{tab:CBSD68} presents the performance of the different DIP variants discussed in this work in terms of PSNR and SSIM for moderate noise.
 Corresponding visual comparisons between the methods are available in~\ref{fig:CBSD68}.
 Our method yields the best results; however, it is significantly slower than other approaches.
 
-% TODO 10 dB vs 20 dB - table & PSNR/SSIM curves
+\begin{table}
+    \small
+    \centering
+    \begin{tabular}{ l c c c c }
+        \toprule
+        &\multicolumn{2}{c}{20\,dB} &\multicolumn{2}{c}{10\,dB}\\
+        \midrule
+        Method &PSNR (dB) $\uparrow$ &SSIM $\in [0,1]$ $\uparrow$ &PSNR (dB) $\uparrow$ &SSIM $\in [0,1]$ $\uparrow$\\
+        \midrule
+        DIP &27.52 {\scriptsize (1.20)} &0.74 {\scriptsize (0.04)} &16.02 {\scriptsize (0.45)} &0.21 {\scriptsize (0.06)} \\
+        DIP (ES) &27.10 {\scriptsize (1.72)} &0.73 {\scriptsize (0.09)} &22.52 {\scriptsize (1.58)} &0.48 {\scriptsize (0.05)} \\
+        DIP-TV &28.29 {\scriptsize (2.31)} &\textbf{0.79} {\scriptsize (0.06)} &18.99 {\scriptsize (0.52)} &0.33 {\scriptsize (0.07)} \\
+        DIP-TV (ES) &\underline{28.37} {\scriptsize (2.31)} &0.78 {\scriptsize (0.06)} &\underline{23.44} {\scriptsize (1.67)} &\textbf{0.56} {\scriptsize (0.08)} \\
+        DDIP &23.15 {\scriptsize (2.84)} &0.58 {\scriptsize (0.14)} &22.58 {\scriptsize (2.57)} &0.54 {\scriptsize (0.10)} \\
+        SG-DIP &\textbf{28.50} {\scriptsize (1.97)} &\textbf{0.79} {\scriptsize (0.07)} &12.34 {\scriptsize (1.16)} &0.12 {\scriptsize (0.05)} \\
+        SG-DIP (ES) &27.42 {\scriptsize (2.40)} &0.75 {\scriptsize (0.09)} &\textbf{23.49} {\scriptsize (2.16)} &0.54 {\scriptsize (0.10)} \\
+        SGR-DIP &26.99 {\scriptsize (2.36)} &0.73 {\scriptsize (0.13)} &23.29 {\scriptsize (2.48)} &\textbf{0.56} {\scriptsize (0.12)} \\
+        \bottomrule
+    \end{tabular}
+    \caption{
+        Quantitative comparison of various DIP variants on the Set14 dataset and different noise levels.
+        Noisy input images are generated at PSNRs of 20\,dB and 10\,dB, respectively.
+        Values represent mean and {\scriptsize (standard deviation)}.
+    }\label{tab:noise-levels}
+\end{table}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{img/fig_6.2.png}
+    \caption{
+        PSNR curves
+        % TODO add caption
+    }\label{fig:noise-levels}
+\end{figure}
 
 \section{Distributed Acoustic Sensing Data}
