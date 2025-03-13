@@ -86,6 +86,8 @@ The constants $c_1$ and $c_2$ stabilize the division, preventing numerical insta
 SSIM values range from 0 to 1, with higher values indicating better structural similarity.
 Unlike PSNR, SSIM is more aligned with human perception, making it a crucial metric for evaluating image denoising performance.
 
+% TODO add local waveform coherence (CC)
+
 \section{Datasets}
 
 This section describes the datasets used in our experiments for both image and distributed acoustic sensing (DAS) data.
@@ -129,6 +131,7 @@ Exact sources for the samples used in our experiments can be found in the supple
 
 \section{Preprocessing}
 
+% TODO local normalization channel wise
 This section discusses preprocessing steps applied to the input before passing it to DIP-based methods.
 For image data, no specific preprocessing is needed.
 After generating noisy samples as described in the last section, we simply standardize the inputs to zero mean and unit variance.
