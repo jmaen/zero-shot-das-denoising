@@ -70,7 +70,7 @@ The actual noise characteristics of DAS data not only depend on the environment,
 
 \section{Deep Learning}
 
-Deep learning is a subfield of machine learning that utilizes deep neural networks to learn complex patterns from data. 
+Deep learning (DL) is a subfield of machine learning that utilizes deep neural networks to learn complex patterns from data. 
 Over the past decade, deep learning has established itself as the state-of-the-art approach for a wide range of problems across various different fields, such as computer vision~\cite{AlexNet}, natural language processing~\cite{GPT3} and biology~\cite{AlphaFold}.
 
 \subsection{Deep Neural Networks}
@@ -83,13 +83,14 @@ The output of a single layer is given by
 where $\mathbf{x} \in \R^n$ is the input, $\mathbf{W} \in \R^{m \times n}$ is a weight matrix, $\mathbf{b} \in \R^m$ is a bias vector and $\varphi$ is an activation function applied element-wise, such as the Sigmoid or ReLU~\cite{ReLU}.
 The outputs of each layer are then passed as inputs to the next layer, which is why this architecture is known as a fully-connected neural network. 
 Activation functions are necessary to prevent the network from reducing to a single linear transformation, ensuring that it can learn complex, non-linear representations.
-Therefore, a neural network can be described as a function~$f_{\theta}: \mathcal{X} \rightarrow \mathcal{Y}$ parameterized by $\theta$, where $\theta$ represents the weights and biases across all layers~\cite{DeepLearning}.
+Therefore, a neural network can be described as a function~$f_{\theta}: \mathcal{X} \rightarrow \mathcal{Y}$ parameterized by $\theta$, where $\mathcal{X}$ and $\mathcal{Y}$ are input and output space, respectively, and $\theta$ represents the weights and biases across all layers~\cite{DeepLearning}.
 In order to optimize these parameters, a loss function~$L: \mathcal{Y} \times \mathcal{Y} \rightarrow \R$ is defined to measure the discrepancy between the predicted output $\hat{y} = f_\theta(x)$ and the target value $y$. 
 Since $\hat{y}$ depends on $\theta$, the loss $L(\hat{y}, y)$ is implicitly a function of $\theta$.
 The gradient of the loss function with respect to the parameters, $\nabla_\theta L = \frac{\partial L}{\partial \theta}$, represents the direction of steepest ascent.
 Therefore, by moving the parameters in the opposite direction of the gradient, the loss function can be minimized.
 Typically, the gradient is not calculated for a single data point or for the whole dataset, but instead for a small subset of the dataset, which is why this approach is referred to as (mini-batch) gradient descent.
 Backpropagation~\cite{Backpropagation} is used to efficiently compute the gradient by making use of the chain rule, enabling fast optimization.
+
 While traditionally neural networks only consisted of a few layers and required hand-crafted features to work effectively, advances in computing power allow modern architectures to automate feature extraction by using additional layers, hence the term \textit{deep} neural network.
 
 \subsection{Convolutional Neural Networks}
@@ -109,6 +110,23 @@ CNNs provide two main advantages: First, since the weights are shared across the
 Second, convolutions are translationally equivariant, meaning that local patterns in the input can be recognized regardless of their position, which makes CNNs very suitable for image data~\cite{DeepLearning}.
 
 \subsection{Normalization}
+
+During the training process, the inputs of each layer change with each iteration as the parameters are optimized.
+That slows down the training because now each layer has to adapt to the new distribution of its inputs. This process is often referred to as internal covariate shift.
+To counteract this issue, Ioffe~et al.\ propose Batch Normalization (BN)~\cite{BatchNorm}.
+The idea behind BN is to normalize the inputs across the whole mini-batch and their spatial dimensions.
+The normalized input for a channel $c$ is given by
+\begin{equation}
+    \hat{x}_c = \frac{x_c - \mu_c}{\sigma_c},
+\end{equation} 
+where $\mu_c$ and $\sigma_c$ are the per-channel mean and standard deviation of the mini-batch, respectively.  
+In order to allow the model to learn the identity if that were the optimal transformation, two additional learnable parameters, $\gamma$ and $\beta$, are introduced. The output of the BN layer is then defined as
+\begin{equation}
+    y_c = \gamma_c\hat{x}_c + \beta_c.
+\end{equation}
+Since there are no batch statistics available at inference time, BN keeps track of the running mean and variance during training and uses these values for normalization.
+While BN is widely used, there exist various similar normalization techniques~\cite{LayerNorm, InstanceNorm, GroupNorm} mainly differing in the dimensions across which they are applied.
+A selection of them is visualized in Figure~\ref{fig:normalization}.
 
 \begin{figure}
     \centering
@@ -179,29 +197,12 @@ Second, convolutions are translationally equivariant, meaning that local pattern
     \end{tikzpicture}
 
     \caption{
-        Different normalization techniques. $N$ is the batch dimension, $C$ is the channel dimension and $H$ and $W$ are
-        the spatial dimensions of a 4D tensor. The input is normalized across the dimensions highlighted in red.
+        Different normalization techniques.
+        The input is a 4D tensor with dimensions $(N, C, H, W)$, where $N$ is the batch dimension, $C$ is the channel dimension, and $H$ and $W$ are the spatial dimensions. 
+        It is normalized across the dimensions highlighted in red.
         Figure adapted from~\cite{GroupNorm}.
     }\label{fig:normalization}
 \end{figure}
-
-During the training process, the inputs of each layer change with each iteration as the parameters are optimized.
-That slows down the training because now each layer has to adapt to the new distribution of its inputs. This process is often referred to as internal covariate shift.
-To counteract this issue, Ioffe~et al.\ propose Batch Normalization (BN)~\cite{BatchNorm}.
-The idea behind BN is to normalize the inputs across the whole mini-batch and their spatial dimensions.
-The normalized input for a channel $c$ is given by
-\begin{equation}
-    \hat{x}_c = \frac{x_c - \mu_c}{\sigma_c},
-\end{equation} 
-where $\mu_c$ and $\sigma_c$ are the per-channel mean and standard deviation of the mini-batch, respectively.  
-In order to allow the model to learn the identity if that were the optimal transformation, two additional learnable parameters, $\gamma$ and $\beta$, are introduced. The output of the BN layer is then defined as
-\begin{equation}
-    y_c = \gamma_c\hat{x}_c + \beta_c.
-\end{equation}
-Since there are no batch statistics available at inference time, BN keeps track of the running mean and variance during training and uses these values for normalization.
-While BN is widely used, there exist various similar normalization techniques~\cite{LayerNorm, InstanceNorm, GroupNorm} mainly differing in the dimensions across which they are applied.
-A selection of them is visualized in Figure~\ref{fig:normalization}.
-
 
 \subsection{Attention Mechanisms}
 

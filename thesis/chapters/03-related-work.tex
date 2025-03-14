@@ -1,6 +1,6 @@
 \chapter{Related Work}
 
-In the last few years, deep-learning-based methods have been successfully applied to various image IPs~\cite{DN,SR,IP} and achieve state-of-the-art results.
+In the last few years, DL-based methods have been successfully applied to various image IPs~\cite{DN,SR,IP} and achieve state-of-the-art results.
 While these networks were traditionally trained in a supervised fashion, requiring clean target images, recent methods remove the dependency on clean data by leveraging self-supervision~\cite{SelfSupervisedDenoising}.
 In this chapter, we give an overview of existing supervised and self-supervised denoising approaches, presenting key principles and discussing their limitations.
 
@@ -23,7 +23,7 @@ The training objective then becomes
     \argmin_\theta \sum_{i=1}^{n} \norm{f_\theta(y_1^{(i)}) - y_2^{(i)}}_2^2.
 \end{equation}
 This method relies on the assumption that the noise is zero-mean, i.e., $\E{n} = 0$, which, due to linearity of expectation, implies that $\E{y} = x$.
-Since the MSE is a mean-seeking loss function, the network then learns to predict $x$ implicitly.
+Since the mean squared error (MSE) is a mean-seeking loss function, the network then learns to predict $x$ implicitly.
 Given infinite data, the optimal solution is actually equivalent to the one obtained by training with clean targets.
 Although N2N is often impractical in practice because the required noisy-noisy pairs are difficult to obtain, it led to the development of other self-supervised approaches.
 
