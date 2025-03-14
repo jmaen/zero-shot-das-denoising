@@ -58,6 +58,7 @@ This concept of virtual sensors leads to high cost-effectiveness and, paired wit
         Types of noise in different DAS setups.
         Both measurements capture seismic activity; however, the SISSLE data mainly suffers from traffic noise (the diagonal lines).
         In contrast, erratic and common mode noise (the horizontal and vertical lines, respectively) are most prominent in the FORGE data.
+        Channel spacing and sample rate are specified in the figure titles.
         Both measurements are normalized by their respective standard deviation.
     }\label{fig:das-noise}
 \end{figure}
@@ -66,7 +67,8 @@ These can be divided into environmental noise and optical noise.
 Environmental noise includes natural phenomena such as winds or ocean waves, but also vibrations caused by vehicular and pedestrian traffic.
 Optical noise originates from various interactions between the light and the fiber.
 It includes high-amplitude erratic noise and common mode noise~\cite{IDF}.
-The actual noise characteristics of DAS data not only depend on the environment, but also the measurement parameters such as channel spacing and sample rate, as visualized in Figure~\ref{fig:das-noise} for data from the SISSLE experiment near Haast, New Zealand~\cite{SISSLE} and the FORGE site in Utah~\cite{FORGE}.
+The actual noise characteristics of DAS data not only depend on the environment, but also the measurement parameters such as channel spacing and sample rate.
+Typically, DAS data is visualized as a time-space image, as shown in Figure~\ref{fig:das-noise} for data from the SISSLE experiment near Haast, New Zealand~\cite{SISSLE} and the FORGE site in Utah~\cite{FORGE}.
 
 \section{Deep Learning}
 
@@ -88,8 +90,9 @@ In order to optimize these parameters, a loss function~$L: \mathcal{Y} \times \m
 Since $\hat{y}$ depends on $\theta$, the loss $L(\hat{y}, y)$ is implicitly a function of $\theta$.
 The gradient of the loss function with respect to the parameters, $\nabla_\theta L = \frac{\partial L}{\partial \theta}$, represents the direction of steepest ascent.
 Therefore, by moving the parameters in the opposite direction of the gradient, the loss function can be minimized.
-Typically, the gradient is not calculated for a single data point or for the whole dataset, but instead for a small subset of the dataset, which is why this approach is referred to as (mini-batch) gradient descent.
-Backpropagation~\cite{Backpropagation} is used to efficiently compute the gradient by making use of the chain rule, enabling fast optimization.
+Typically, the gradient is not calculated for a single data point or for the whole dataset, but instead for a small subset of the dataset, balancing efficiency and stability during optimization.
+This approach is referred to as (mini-batch) gradient descent.
+Backpropagation~\cite{Backpropagation} efficiently computes the gradient by propagating errors backward through the network using the chain rule, enabling fast optimization.
 
 While traditionally neural networks only consisted of a few layers and required hand-crafted features to work effectively, advances in computing power allow modern architectures to automate feature extraction by using additional layers, hence the term \textit{deep} neural network.
 

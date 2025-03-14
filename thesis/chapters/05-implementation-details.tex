@@ -24,7 +24,9 @@ We find that parameterizing these skip connections is crucial for achieving stro
 While the original DIP paper employs $1 \times 1$ convolutions in the skip connections, we also explore a variant that replaces these convolutions with ECA blocks.
 We find that both variants yield comparable performance in terms of PSNR and SSIM\@; however, ECA blocks often contribute to better preservation of fine details, as shown in Figure~\ref{fig:ECA}.
 
-As in the original DIP paper, Batch Normalization is applied throughout the network and all activation functions are LeakyReLU~\cite{LeakyReLU}.
+As in the original DIP paper, Batch Normalization (BN) is applied throughout the network.
+Note that for the DIP setting, BN is actually equivalent to Instance Normalization, as the batch size is 1 and there is no difference between training and inference time.
+All activation functions used in the network are LeakyReLU~\cite{LeakyReLU}.
 LeakyReLU extends ReLU by allowing a small slope for negative values, ensuring non-zero gradients throughout the domain.
 Formally, it is defined as
 \begin{equation}

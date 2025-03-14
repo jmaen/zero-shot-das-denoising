@@ -1,6 +1,6 @@
 \chapter{Related Work}
 
-In the last few years, DL-based methods have been successfully applied to various image IPs~\cite{DN,SR,IP} and achieve state-of-the-art results.
+In the last few years, DL-based methods have been successfully applied to various image inverse problems~\cite{DN,SR,IP} and achieve state-of-the-art results.
 While these networks were traditionally trained in a supervised fashion, requiring clean target images, recent methods remove the dependency on clean data by leveraging self-supervision~\cite{SelfSupervisedDenoising}.
 In this chapter, we give an overview of existing supervised and self-supervised denoising approaches, presenting key principles and discussing their limitations.
 
@@ -127,4 +127,8 @@ While N2S directly uses random values, N2V chooses the replacement pixels random
 In Noise2Same~\cite{Noise2Same}, the authors demonstrate that, in practice, both N2V and N2S are not strictly $\mathcal{J}$-invariant and thus conclude that strict $\mathcal{J}$-invariance is not necessary for achieving good denoising performance.
 Therefore, they propose to do without explicit manipulation of the receptive field and instead add a regularization term that encourages the network to learn an approximately $\mathcal{J}$-invariant mapping by itself.
 Laine~et al.~\cite{BSN} choose a different approach; instead of relying on masking strategies, they directly manipulate the receptive field by adapting the network architecture itself.
-% XXX add Self2Self
+
+In addition to the blind-spot-based  methods discussed so far, which are typically trained on datasets of noisy images, there also exist methods that operate in a zero-shot setting.
+Self2Self~\cite{S2S} is one such method, which leverages dropout-based self-consistency for denoising.
+During training, the network is applied to a single noisy image, and dropout is used to randomly disable certain parts of the network, forcing it to rely on other parts to predict the noisy pixels.
+The network then learns to produce consistent outputs across different dropout-induced versions of the image, allowing it to suppress noise while maintaining the underlying structure.
