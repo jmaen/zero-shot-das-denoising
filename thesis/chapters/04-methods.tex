@@ -187,7 +187,7 @@ Furthermore, we use a modified cosine schedule:
     \bar{\alpha}_t = 0.8\cos\left(\frac{t}{T}\cdot\frac{\pi}{2}\right)^2+0.1.
 \end{equation}
 
-\section{Self-Guided Deep Image Prior}
+\section{Self-Guided Deep Image Prior}\label{sec:SG-DIP}
 
 Another extension of DIP is the Self-Guided Deep Image Prior (SG-DIP)~\cite{SG-DIP}.
 Similar to DDIP, it also iteratively updates the network input; however, instead of doing so explicitly, it achieves this implicitly by optimizing both the network's parameters and the input itself.

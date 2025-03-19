@@ -1,4 +1,4 @@
-\chapter{Supplementary Information}
+\chapter{Supplementary Material}
 
 \section{Acronyms}
 
@@ -32,4 +32,21 @@
     \caption{List of common acronyms.}
 \end{table}
 
-% TODO DAS data sources
+\section{DAS Sample Details}
+
+% TODO add SISSLE data
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{ l l c c c c }
+        \toprule
+        Data & File name & Channels & \shortstack{Time\\span (s)} & \shortstack{Channel\\spacing (m)} & \shortstack{Sample\\rate (Hz)} \\
+        \midrule
+        \textit{FORGE 1} & {\scriptsize \shortstack{FORGE\_78-32\_iDASv3-P11\_\\UTC190428070308.sgy}} & 200--1160 & 9.75--10.75 & 1 & 1000 \\
+        \\[-1em]
+        \textit{FORGE 2} & {\scriptsize \shortstack{FORGE\_78-32\_iDASv3-P11\_\\UTC190423213209.sgy}} & 200--1160 & 0.75--1.75 & 1 & 1000 \\
+        \\[-1em]
+        \textit{FORGE 3} & {\scriptsize \shortstack{FORGE\_78-32\_iDASv3-P11\_\\UTC190419001218.sgy}} & 50--1010 & 3.5--4.5 & 1 & 1000 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Detailed information on the DAS samples used in our experiments.}\label{tab:sample-details}
+\end{table}

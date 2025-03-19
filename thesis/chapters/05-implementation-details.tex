@@ -88,6 +88,7 @@ The constants $c_1$ and $c_2$ stabilize the division, preventing numerical insta
 SSIM values range from 0 to 1, with higher values indicating better structural similarity.
 Unlike PSNR, SSIM is more aligned with human perception, making it a crucial metric for evaluating image denoising performance.
 
+\subsection{Local Waveform Coherence}\label{sec:CC}
 % TODO add local waveform coherence (CC)
 
 \section{Datasets}
@@ -121,19 +122,16 @@ where $\sigma = \sqrt{10^{-\frac{\text{PSNR}(x,\hat{x})}{10}}}$.
 
 \subsection{Distributed Acoustic Sensing Datasets}
 
-% TODO add experiment details (see Mattermost)
 For denoising DAS data, we use data from two real-world experiments:
 \begin{itemize}
     \item \textbf{SISSLE}~\cite{SISSLE}: The South Island Seismology at the Speed of Light Experiment near Haast, New Zealand.
     \item \textbf{FORGE}~\cite{FORGE}: The Frontier Observatory for Research in Geothermal Energy in Utah.
 \end{itemize}
-Exact sources for the samples used in our experiments can be found in the supplementary material.
-
-% XXX synth data
+Detailed information and exact sources for the samples used in our experiments can be found in the supplementary material.
 
 \section{Preprocessing}
 
-% TODO local normalization channel wise
+% TODO local normalization channel wise (and only for SG-DIP!)
 This section discusses preprocessing steps applied to the input before passing it to DIP-based methods.
 For image data, no specific preprocessing is needed.
 After generating noisy samples as described in the last section, we simply standardize the inputs to zero mean and unit variance.
@@ -141,7 +139,7 @@ After generating noisy samples as described in the last section, we simply stand
 For DAS data, however, appropriate preprocessing is crucial for the success of DIP-based methods.
 As discussed in Section~\ref{sec:DAS}, noise in DAS measurements often exhibits a grid-like structure, mainly due to erratic and common mode noise.
 This structured noise is repetitive and spatially correlated, and therefore inherently easy to learn for a convolutional network, which contradicts a key assumption of DIP --- that meaningful signal is learned faster than noise.
-To mitigate this issue, following~\cite{IDF}, we first apply a low-pass filter with a high-cut frequency of 200\,Hz.
+To mitigate this issue, following~\cite{IDF}, we first apply a band-pass filter.
 To further remove common mode noise, we subtract the time-wise median from the filtered signal.
 
 Another challenge arises due to the large variations in amplitude within DAS measurements.
@@ -158,6 +156,7 @@ In practice, we use a window size of $32 \times 32$.
 After DIP-based processing, we rescale the output using the stored local mean and standard deviation to restore the original amplitude relationships.
 The different preprocessing steps are visualized in Figure~\ref{fig:preprocessing}.
 
+% TODO correct preprocessing figure
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{img/fig_5.3.png}

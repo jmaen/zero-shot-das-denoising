@@ -1,1 +1,13 @@
-\chapter{Discussion}\label{ch:discussion}
+\chapter{Discussion}
+
+Our results highlight the inherent challenges of applying DIP-based denoising methods to real-world DAS data.
+While DIP-based approaches show effectiveness in conventional image denoising, their performance in DAS contexts is less consistent, largely due to differences in noise characteristics and signal structures.
+
+Nonetheless, we demonstrate that DIP-based methods can achieve good denoising performance on DAS data, even outperforming existing zero-shot approaches, particularly when signal intensity is low.
+However, several DIP variants exhibit a lack of robustness to variations in signal intensity or different noise types.
+For instance, while the basic DIP, yields very good results on strong signals, it often fails to capture weaker signals before overfitting to noise.
+SGR-DIP, on the other hand, performs well in weak-signal regimes, but fails to adequately reconstruct high amplitude signals.
+Approaches that leverage early stopping, which achieve some of the best results on regular image data, do not translate well to DAS data, as assumptions about the optimization process, namely the progression of variance over time, do not seem to align with the characteristics of DAS data.
+Another key limitation is the runtime.
+Since all DIP-based methods rely on optimizing an entire neural network for each sample they process, they are inherently more computationally intensive compared to conventional denoising methods.
+This precludes their application in large-scale data processing or even in real-time scenarios.

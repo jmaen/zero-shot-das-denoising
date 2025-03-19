@@ -120,3 +120,112 @@ However, in terms of visual quality, it is clearly outperformed by our SGR-DIP, 
 \end{figure}
 
 \section{Distributed Acoustic Sensing Data}
+
+For real-world DAS data, no clean reference data is available.
+Consequently, evaluation primarily relies on visual comparison of denoised outputs and their residuals.
+Additionally, we also consider the notion of local waveform coherence discussed in Section~\ref{sec:CC}.
+
+We compare the DIP-based approaches with two other zero-shot denoising methods, namely BM3D~\cite{BM3D} and the integrated denoising framework (IDF) proposed by Chen et al.~\cite{IDF}.
+Following~\cite{SelfMixed}, we set the noise standard deviation to 0.1 for BM3D and use the default parameters for IDF\@.
+
+Our results indicate that findings from standard image denoising do not directly translate to DAS data.
+While early-stopping strategies perform well for image data, ES-WMV proves inconsistent in DAS settings, as the variance curve often lacks a clear U-shape.
+This often leads to stopping points either at the beginning or near the end of training.
+Similarly, DIP-TV exhibits high sensitivity to the balancing parameter $\lambda$, with large values producing all-zero regions and small values reducing the regularization effect.
+No single $\lambda$ value generalizes well across different signal intensities and varying DAS setups, making DIP-TV unsuitable as a general-purpose approach.
+A similar issue arises with DDIP, where the regularization induced by the diffusion process is overly strong, typically resulting in all-zero outputs for DAS data.
+These common failure modes are visualized in~\ref{fig:failure-cases}.
+
+Out of the methods discussed so far, IDF, DIP and SGR-DIP yield the most promising results.
+For the band-pass preprocessing of FORGE data, we use a high-cut frequency of 200\,Hz, following~\cite{IDF}.
+For DIP, we decrease the maximum number of iterations to 1000, for SGR-DIP we set it to only 300.
+Figure~\ref{fig:FORGE} provides a detailed comparison of these approaches on DAS samples with varying signal intensities (\textit{FORGE 1--3}, see Table~\ref{tab:sample-details}).
+
+\begin{figure}[b!]
+    \centering
+    \includegraphics[width=\textwidth]{img/fig_6.3.png}
+    \caption{
+        Common failure modes of different denoising methods on the \textit{FORGE 1} sample.
+        The detected optimal stopping point occurs too early in the training process and DDIP's regularization is too strong, both leading to an (almost) all-zero output.
+        While DIP-TV and BM3D capture the signal, both methods produce regions of all-zero values.
+        The noisy input is normalized by its standard deviation prior to denoising.
+    }\label{fig:failure-cases}
+\end{figure}
+
+
+% XXX improve figure layout (fix spacing)
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{img/fig_6.4_1.png}\\
+    \vspace{10pt}
+    \includegraphics[width=\textwidth]{img/fig_6.4_2.png}\\
+    \vspace{10pt}
+    \includegraphics[width=\textwidth]{img/fig_6.4_3.png}
+    \caption{
+        Visual comparison of IDF, DIP, and SGR-DIP on 3 different DAS samples.
+        The first two samples include moderately strong and strong signals, respectively; the last consists of pure noise.
+        The first two rows show denoised results and the corresponding residuals.
+        The third row provides measurements for individual channels indicated by the dashed black lines, gray curves represent the corresponding noisy channels.
+        Noisy inputs are normalized by their standard deviation prior to denoising.
+        Figure adapted from~\cite{DAS-CN2S}.
+    }\label{fig:FORGE}
+\end{figure}
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{img/fig_6.5.png}
+    \caption{
+        Comparison of SGR-DIP with and without local normalization on the \textit{FORGE 1} sample.
+        The noisy input is normalized by its standard deviation prior to denoising.
+    }\label{fig:local-normalization}
+\end{figure}
+
+\begin{wraptable}{r}{0.48\textwidth}
+    \centering
+    \begin{tabular}{ l c }
+        \toprule
+        Method &Runtime (m) $\downarrow$\\
+        \midrule
+        IDF &0.12\\
+        DIP &1.98\\
+        SGR-DIP &1.94\\
+        \bottomrule
+    \end{tabular}
+    \caption{Average runtimes of the methods visualized in Figure~\ref{fig:FORGE}.}\label{tab:runtimes}
+\end{wraptable}
+
+IDF demonstrates consistent performance across all signal intensities.
+While DIP preserves more signal in the strong signal sample, outperforming IDF in this case, its performance slightly declines for lower signal intensities.
+SGR-DIP surpasses both methods for moderately strong signals and is the only approach that correctly produces an all-zero output for the pure-noise sample.
+However, it struggles to reproduce very high amplitudes, leading to greater signal loss in the strong signal case.
+
+Another key consideration is runtime.
+Unlike DIP and SGR-DIP, which require training an entire neural network, the DL-free IDF is significantly faster, as detailed in Table~\ref{tab:runtimes}.
+A notable observation is the differing impact of local normalization on the DIP-based methods. 
+While it slightly degrades denoising performance in DIP, it is essential for SGR-DIP, as illustrated in Figure~\ref{fig:local-normalization}.
+
+In addition to the FORGE dataset, we conduct experiments on data recorded during the SISSLE experiment.
+For band-pass preprocessing, we use a high-cut frequency of 10\,Hz, following~\cite{DAS-CN2S}.
+As before, we compare IDF, DIP, and SGR-DIP\@.
+For SGR-DIP, we use the modification where the noisy sample serves as the initial $z$ and set the noise standard deviation $\sigma = \frac{3\max(z)}{4}$, as discussed in Section~\ref{sec:SG-DIP}.
+
+All three methods enhance local waveform coherence; however, they also attenuate the P- and S-waves of the earthquake present in the sample.
+To mitigate this issue, we investigate omitting the band-pass preprocessing.
+While this leads to additional artifacts in SGR-DIP, it allows DIP to better preserve the P-wave while still suppressing incoherent noise.
+However, in this case, the improvement in local waveform coherence is only marginal compared to the noisy input. 
+Both variants are visualized in Figure~\ref{fig:SISSLE}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{img/fig_6.6_1.png}\\
+    \vspace{10pt}
+    \includegraphics[width=\textwidth]{img/fig_6.6_2.png}
+    \caption{
+        Visual comparison of IDF, DIP, and SGR-DIP on the \textit{SISSLE 1} sample with and without band-pass preprocessing.
+        Note that the input and IDF results are identical in both cases and are only given for easier reference.
+        The first two rows show denoised results and the corresponding residuals.
+        The third row provides measurements for individual channels indicated by the dashed black lines, gray curves represent the corresponding noisy channels.
+        Noisy inputs are normalized by their standard deviation prior to denoising.
+        Figure adapted from~\cite{DAS-CN2S}.
+    }\label{fig:SISSLE}
+\end{figure}
