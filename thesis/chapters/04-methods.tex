@@ -192,14 +192,14 @@ Furthermore, we use a modified cosine schedule:
 Another extension of DIP is the Self-Guided Deep Image Prior (SG-DIP)~\cite{SG-DIP}.
 Similar to DDIP, it also iteratively updates the network input; however, instead of doing so explicitly, it achieves this implicitly by optimizing both the network's parameters and the input itself.
 Formally, the proposed training objective is defined as:
-\begin{equation}
+\begin{equation}\label{eq:SG-DIP}
     \theta^*,z^* = \argmin_{\theta, z} \norm{\E[n]{f_\theta(z + n)} - y}_2^2 + \lambda\norm{\E[n]{f_\theta(z + n)} - z}_2^2,
 \end{equation}
 where $y$ refers to the noisy image, $z$ is a random tensor, $n$ is Gaussian noise sampled as $n \sim \normal$ and $\lambda$ is a hyperparameter balancing the two terms.
 Empirically, the authors find that setting $\sigma = \frac{\max(z)}{2}$ yields good results.
 The first term enforces data fidelity, while the second term acts as a regularization term, encouraging the network to behave as a denoiser by constraining the output to be close to the learned input $z$, thereby mitigating overfitting. 
 The expectation over the noise distribution helps to stabilize the learned mapping; the denoised estimate is then obtained as $\hat{x} = \E[n]{f_\theta(z + n)}$.
-In practice, the expectation is approximated by averaging the outputs for multiple noise samples.
+In practice, the expectation is approximated by averaging the outputs of $k$ different noise samples.
 
 This objective naturally induces a structured learning process:
 Ideally, the network first learns to capture the general structure of the image.
@@ -238,16 +238,21 @@ However, in SG-DIP, the regularization term constrains the output from deviating
     }\label{fig:SGR-DIP}
 \end{figure}
 
-% TODO pseudocode
 \begin{wrapfigure}{r}{0.48\textwidth}
     \begin{algorithm}[H]
-        \caption{SGR-DIP}
-        \KwIn{Noisy image $y$}
-        \KwOut{Reconstructed image $\hat{x}$}
-        \For{t=1 \text{ to } T}{
-            Compute the current output of the network \( \hat{x} = f_{\theta}(z) \)\;
+        \caption{SGR-DIP}\label{alg:SGR-DIP}
+        \KwIn{noisy image $y$, randomly initialized $z_0$ and $\theta_0$}
+        \KwOut{denoised image $\hat{x}$}
+        \For{$t=0$ \KwTo $T$}{
+            $\hat{x} \gets \mathbf{0}$\\
+            \For{$i=0$ \KwTo $k$}{
+                sample $n \sim \normal$\\
+                $\hat{x} \gets \hat{x} + \frac{1}{k}f_{\theta_t}(z_t+n)$\\
+            }
+            $\lambda \gets s(t)$\\
+            obtain $\theta_{t+1}$ and $z_{t+1}$ via Eq.~\ref{eq:SG-DIP}\\
         }
-        \Return the reconstructed image \( \hat{x} \)\;
+        \Return $\hat{x}$
     \end{algorithm}
 \end{wrapfigure}
 
@@ -256,11 +261,12 @@ To explicitly reinforce this behavior, we propose gradually increasing $\lambda$
 This approach intuitively divides the optimization process into two phases:
 Initially, both terms in the objective are balanced, allowing the network to extract the general structure of the image. As training progresses and $\lambda$ increases, the regularization term dominates, restricting the model to only minor refinements.
 Therefore, we term this modification Self-Guided Refinement Deep Image Prior (SGR-DIP).
-The overall training objective is illustrated in Figure~\ref{fig:SGR-DIP}.
+The overall training objective is illustrated in Figure~\ref{fig:SGR-DIP} and Algorithm~\ref{alg:SGR-DIP}.
 
 We observe that the addition of the schedule improves denoising performance; however, we note that the effectiveness of this approach is highly dependent on the specific configuration of the schedule implemented, especially on DAS data.
 If the regularization term remains too small for an extended period, there is still a risk of overfitting.
 Conversely, if it increases too prematurely, it may hinder further learning before the image structure has been adequately captured.
+
 To address this issue, we also consider a variant in which we replace the random initialization of $z$ with the noisy image $y$.
 Note that the two loss terms are still different, as $z$ is optimized throughout training, while $y$ stays constant.
 This modification facilitates the network's ability to learn the primary structure of the image. 
