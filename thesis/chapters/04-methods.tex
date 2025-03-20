@@ -2,10 +2,10 @@
 
 While the self-supervised denoising methods discussed so far eliminate the need for clean data, most still require large datasets of noisy images or are limited to specific noise types.
 A notable exception is the Deep Image Prior (DIP) introduced by Ulyanov~et al.~\cite{DIP}.
-DIP is a zero-shot method, meaning it operates on a single noisy sample, and does not make any explicit assumptions about the noise distribution.
+DIP is a zero-shot method, meaning it operates on a single noisy sample, and makes no explicit assumptions about the noise distribution.
 
 In this chapter, we present DIP and its various extensions.
-First, we describe the fundamental principles of DIP, followed by common techniques used to further regularize the solution.
+First, we describe the fundamental principles of DIP, followed by common techniques used to further regularize the solution space.
 Finally, we explore additional DIP-based approaches that build upon these foundations.
 
 \section{Deep Image Prior}
@@ -15,13 +15,13 @@ This is typically expressed as an optimization problem of the form
 \begin{equation}\label{eq:ip-optim}
     \hat{x} = \argmin_x L(x,y) + R(x),
 \end{equation}
-where $L(x,y)$ is a data fidelity term that ensures that the denoised estimate $\hat{x}$ stays close to the noisy signal $y$ and $R(x)$ is the regularizer.
+where $L(x,y)$ is a data fidelity term ensuring that the denoised estimate $\hat{x}$ stays close to the noisy signal $y$ and $R(x)$ is the regularizer.
 Most traditional, non-deep-learning methods, such as total variation denoising~\cite{TV}, rely on an explicit regularization term.
 The self-supervised methods discussed in Section~\ref{sec:self-supervised} do not necessarily include such a term; however, they do make specific assumptions about the solution (e.g., zero-mean or spatially independent noise), which are implicitly encoded in the training procedure --- through techniques like subsampling or masking.
 
-In contrast, DIP does not make any explicit assumptions about the noise or image structure.
-Instead, it relies solely on the architecture of a convolutional neural network to implicitly regularize the solution.
-The key idea is to parameterize an image $x$ as the output of an CNN $f_\theta$ through $x = f_\theta(z)$, where $z$ refers to a random vector, e.g., $z \sim \unormal$.
+In contrast, DIP makes no explicit assumptions about the noise or image structure.
+Instead, it relies solely on the architecture of a convolutional neural network to implicitly regularize the solution space.
+The key idea is to parameterize an image $x$ as the output of a CNN $f_\theta$ through $x = f_\theta(z)$, where $z$ refers to a random tensor, e.g., $z \sim \unormal$.
 \begin{figure}
     \centering
     \begin{tikzpicture}[scale=1.5]
@@ -82,7 +82,7 @@ In terms of Equation~(\ref{eq:ip-optim}), the MSE is used as the loss function a
     \theta^* = \argmin_\theta \norm{f_\theta(z) - y}_2^2.
 \end{equation}
 After training the network using gradient descent, the denoised estimate is then obtained as $\hat{x} = f_{\theta^*}(z)$.
-The random vector $z$ remains fixed throughout the training process.
+The random tensor $z$ remains fixed throughout the training process.
 The regularizing effect of this parameterization relies on the observation that CNNs tend to capture structured patterns (e.g., edges and textures) before fitting to high-frequency noise.
 However, since the network is sufficiently expressive, it will eventually memorize the noise, leading to overfitting.
 Thus, it is crucial to identify the optimal stopping point, at which the network successfully learned the underlying image structure while minimizing the influence of noise.
@@ -90,12 +90,12 @@ This process is visualized in Figure~\ref{fig:priors}.
 Formally, this regularizer can be expressed as
 \begin{equation}
     R(x) = \begin{cases}
-        0 &\text{$f_\theta$ can produce $x$ in $N$ steps}\\
+        0 &\text{$f_\theta$ can produce $x$ in $T$ steps}\\
         +\infty &\text{else},
     \end{cases}
 \end{equation}
-where $N$ refers to a fixed maximum number of iterations.
-However, such a fixed stopping point is not ideal because the optimal stopping point depends on factors such as the specific image $x$, the random vector $z$ and also the initial network parameters $\theta_0$.
+where $T$ refers to a fixed maximum number of iterations.
+However, such a fixed stopping point is not ideal because the optimal stopping point depends on factors such as the specific image $x$, the random tensor $z$, and also the initial network parameters $\theta_0$.
 
 \subsection{Early Stopping}
 
@@ -114,11 +114,11 @@ The process of halting training to mitigate overfitting is known as early stoppi
 As discussed earlier, a fixed stopping point generally does not work well, so we need to find a way to dynamically detect optimal stopping points during training.
 If the clean ground-truth image $x$ were available, one could simply track image quality using an appropriate metric, e.g., PSNR or SSIM, and stop training at its peak.
 However, since $x$ is inherently unknown in the denoising setting, we need an alternative criterion to determine when to stop.
-Some image quality metrics do not require a clean reference~\cite{BRISQUE}, but they are not very effective for early stopping.
+While some image quality metrics do not require a clean reference~\cite{BRISQUE}, they tend to be less effective for early stopping.
 
 Wang et al.~\cite{ES} instead propose a criterion based on the running variance of the DIP reconstructions over time.
 Let $\{x_t\}_{t \geq 1}$ denote the sequence of the respective denoised estimates $x_t = f_{\theta_t}(z)$ at iteration $t$.
-The authors observe that the MSE $\norm{x_t-x}_F^2$ initially drops as the networks learns the image structure, and then rises again due to overfitting to noise, leading to a U-shaped curve.
+The authors observe that the MSE $\norm{x_t-x}_F^2$ initially drops as the networks learns the image structure, and then rises again due to overfitting to noise, resulting in a U-shaped curve.
 The challenge remains to detect the minimum of said curve without access to $x$.
 To achieve this, they consider the running variance over a window of $W$ iterations, given by
 \begin{equation}\label{eq:Var}
@@ -132,7 +132,7 @@ This approach, termed early stopping via windowed moving variance (ES-WMV), is e
 
 \subsection{Total Variation}
 
-Another way to prevent overfitting is to incorporate an additional explicit regularization term, such as total variation (TV)~\cite{TV}.
+Another way of preventing overfitting is to incorporate an additional explicit regularization term, such as total variation (TV)~\cite{TV}.
 TV encourages piecewise smoothness by penalizing abrupt intensity changes in the image.
 Formally, for an image $x \in \R^{W \times H}$, it is defined as
 \begin{equation}
@@ -165,7 +165,7 @@ Using the reparameterization trick~\cite{VAE}, this can be expressed as
 \begin{equation}
     x_t = \sqrt{\bar{\alpha}_t}x_0 + \sqrt{1-\bar{\alpha}_t}\epsilon, \quad \epsilon \sim \unormal.
 \end{equation}
-In DDPMs~\cite{DDPM}, a simple linear schedule for $\beta_t$ is used. Nichol et al.~\cite{IDDPM} propose an improved cosine noise schedule, which better balances noise levels across timesteps and leads to higher sample quality.
+In DDPMs~\cite{DDPM}, a simple linear schedule for $\beta_t$ is used. Nichol et al.~\cite{IDDPM} propose an improved cosine noise schedule, which better balances noise levels across timesteps, leading to higher sample quality.
 The goal of the diffusion model is to learn the reverse process, parameterized by a neural network, which iteratively removes noise:
 \begin{equation}
     p_\theta(x_{t-1} \mid x_t) = \fnormal{x_{t-1}}{\mu_\theta(x_t, t)}{\beta_t \mathbf{I}},
@@ -174,7 +174,7 @@ where $\mu_\theta$ is a neural network predicting the mean of the denoised sampl
 \newpage
 Chung et al.\ combine DIP with ideas from diffusion models, leading to the Deep Diffusion Image Prior (DDIP)~\cite{DDIP}.
 They observe that both DIP and diffusion models aim to recover a posterior mean:
-DIP estimates $\E{x | z,y}$ and diffusion models estimate $\E{x_0 | x_t,y}$.
+DIP estimates $\E{x \mid z,y}$ and diffusion models estimate $\E{x_0 \mid x_t,y}$.
 As both $z$ and $x_t$ are distributed according to $\unormal$ for $t=T$, they propose a generalization of DIP to multiple noise scales. Instead of optimizing from pure noise, they iteratively reduce the noise in $z$, gradually steering it toward the clean image $x_0$.
 \begin{align}
     \text{for}\ t=T,\dots,1:\ &\theta_{t-1} = \argmin_{\theta_t} \norm{f_{\theta_t}(x_t) - y}_2^2,\\
@@ -195,7 +195,7 @@ Formally, the proposed training objective is defined as:
 \begin{equation}\label{eq:SG-DIP}
     \theta^*,z^* = \argmin_{\theta, z} \norm{\E[n]{f_\theta(z + n)} - y}_2^2 + \lambda\norm{\E[n]{f_\theta(z + n)} - z}_2^2,
 \end{equation}
-where $y$ refers to the noisy image, $z$ is a random tensor, $n$ is Gaussian noise sampled as $n \sim \normal$ and $\lambda$ is a hyperparameter balancing the two terms.
+where $y$ refers to the noisy image, $z$ is a random tensor, $n$ is Gaussian noise sampled as $n \sim \normal$, and $\lambda$ is a hyperparameter balancing the two terms.
 Empirically, the authors find that setting $\sigma = \frac{\max(z)}{2}$ yields good results.
 The first term enforces data fidelity, while the second term acts as a regularization term, encouraging the network to behave as a denoiser by constraining the output to be close to the learned input $z$, thereby mitigating overfitting. 
 The expectation over the noise distribution helps to stabilize the learned mapping; the denoised estimate is then obtained as $\hat{x} = \E[n]{f_\theta(z + n)}$.
@@ -204,8 +204,8 @@ In practice, the expectation is approximated by averaging the outputs of $k$ dif
 This objective naturally induces a structured learning process:
 Ideally, the network first learns to capture the general structure of the image.
 Due to the optimization of $z$ and the regularization term, both the input and output should provide a reasonable estimate of the clean image.
-At this stage, vanilla DIP would typically begin to overfit.
-However, in SG-DIP, the regularization term constrains the output from deviating too much from the input, making it costly for the network to fit the noise.  % XXX layout --- since doing so would introduce global alterations to the output.
+At this stage, vanilla DIP typically begins to overfit.
+However, in SG-DIP, the regularization term constrains the output from deviating too much from the input, making it costly for the network to fit the noise --- since doing so would introduce global alterations to the output.
 
 \begin{figure}
     \centering
@@ -263,7 +263,7 @@ Initially, both terms in the objective are balanced, allowing the network to ext
 Therefore, we term this modification Self-Guided Refinement Deep Image Prior (SGR-DIP).
 The overall training objective is illustrated in Figure~\ref{fig:SGR-DIP} and Algorithm~\ref{alg:SGR-DIP}.
 
-We observe that the addition of the schedule improves denoising performance; however, we note that the effectiveness of this approach is highly dependent on the specific configuration of the schedule implemented, especially on DAS data.
+We observe that the addition of the schedule improves denoising performance; however, we also note that the effectiveness of this approach is highly dependent on the specific configuration of the schedule implemented, especially on DAS data.
 If the regularization term remains too small for an extended period, there is still a risk of overfitting.
 Conversely, if it increases too prematurely, it may hinder further learning before the image structure has been adequately captured.
 

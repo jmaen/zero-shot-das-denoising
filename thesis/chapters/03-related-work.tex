@@ -1,7 +1,7 @@
 \chapter{Related Work}
 
-In the last few years, DL-based methods have been successfully applied to various image inverse problems~\cite{DN,SR,IP} and achieve state-of-the-art results.
-While these networks were traditionally trained in a supervised fashion, requiring clean target images, recent methods remove the dependency on clean data by leveraging self-supervision~\cite{SelfSupervisedDenoising}.
+In recent years, DL-based methods have been successfully applied to various image inverse problems~\cite{DN,SR,IP}, achieving state-of-the-art results.
+While these networks were traditionally trained in a supervised fashion, requiring clean target images, recent methods eliminate the dependency on clean data by leveraging self-supervision~\cite{SelfSupervisedDenoising}.
 In this chapter, we give an overview of existing supervised and self-supervised denoising approaches, presenting key principles and discussing their limitations.
 
 \section{Supervised Methods}
@@ -25,13 +25,13 @@ The training objective then becomes
 This method relies on the assumption that the noise is zero-mean, i.e., $\E{n} = 0$, which, due to linearity of expectation, implies that $\E{y} = x$.
 Since the mean squared error (MSE) is a mean-seeking loss function, the network then learns to predict $x$ implicitly.
 Given infinite data, the optimal solution is actually equivalent to the one obtained by training with clean targets.
-Although N2N is often impractical in practice because the required noisy-noisy pairs are difficult to obtain, it led to the development of other self-supervised approaches.
+Although N2N is often impractical because the required noisy-noisy pairs are difficult to obtain, it led to the development of other self-supervised approaches.
 
 \section{Self-Supervised Methods}\label{sec:self-supervised}
 
 Self-supervised methods are trained similarly to traditional supervised methods, but they do not rely on externally-provided target values.
 In the context of denoising, these approaches can be broadly categorized into two main strategies:
-Noise2Noise-based methods use a training objective similar to the one given by Equation~(\ref{eq:N2N}); however they generate their own noisy-noisy training pairs from individual noisy inputs.
+Noise2Noise-based methods use a training objective similar to the one given by Equation~(\ref{eq:N2N}); however, they generate their own noisy-noisy training pairs from individual noisy inputs.
 Blind-spot-based methods, on the other hand, exploit spatial correlations in the image using different masking strategies, either in the input or in the network architecture itself.
 
 \subsection{Noise2Noise-Based Methods}
@@ -40,9 +40,9 @@ Noisier2Noise~\cite{Noisier2Noise} builds upon N2N, but unlike N2N, it does not 
 Instead, it constructs these training pairs from individual noisy images only.
 Given a noisy input $y$, it generates an even noisier image $z = y + m = x + n + m$, with additional independent noise $m$ following the same distribution as $n$.
 Once again, it is optimized through Equation~(\ref{eq:N2N}), using $z$ as the input and $y$ as the target.
-The authors argue that $\E{y|z} \approx x + \frac{n + m}{2}$, since $\E{n} = \E{m}$, as detailed in the supplementary material.
+The authors argue that $\E{y \,|\, z} \approx x + \frac{n + m}{2}$, since $\E{n} = \E{m}$, as detailed in the supplementary material.
 Therefore, by the same reasoning as in N2N, given a sufficient amount of noisy images, the network should learn to predict the mean of $x$ and $z$, which can then be used to obtain the denoised estimate as $\hat{x} = 2f_{\theta^*}(z) - z$.
-While this method removes the need for a paired dataset, it requires knowledge of the noise distribution in order to sample the additional noise, which often is not available in an unsupervised setting.
+While this method removes the need for a paired dataset, it requires knowledge of the noise distribution in order to sample the additional noise, which often is unavailable in an unsupervised setting.
 
 Another approach based on N2N is Neighbor2Neighbor~\cite{Neighbor2Neighbor}.
 The key idea behind this method is to construct training pairs from the noisy input $y$ by leveraging spatial redundancy through a subsampling strategy:
@@ -59,6 +59,7 @@ In order to avoid overfitting to the noisy target, it makes use of residual lear
 \subsection{Blind-Spot-Based Methods}
 
 All blind-spot-based methods assume that noise is zero-mean and spatially independent, while the clean image signal exhibits spatial correlations.
+This fundamental distinction between noise and the clean signal allows for the development of techniques exploiting these properties for effective denoising.
 The underlying key principle for all of them is that a network should predict the value of a given pixel in the denoised image without directly observing its noisy counterpart, hence the term \textit{blind-spot}.
 Therefore, the network can only learn from the neighboring pixels, which --- under the assumption of independent noise --- do not carry any information about the noise affecting the target pixel, thus preventing the network from predicting a noisy image.
 
@@ -109,6 +110,10 @@ The receptive field refers to the set of pixels in the input that influences a p
 However, this process is not feasible in practice, as a whole patch has to be processed to obtain a single output pixel.
 In order to allow efficient training, they approximate this behavior by training on random patches, for each of which a fixed number of pixels are randomly replaced by local neighbors, using their respective original noisy values as targets.
 
+\vspace{20pt}
+
+\pagebreak
+
 In Noise2Self (N2S)~\cite{N2S}, Batson~et al.\ generalize this concept to sets of variables, instead of single pixels only, by introducing the notion of $\mathcal{J}$-invariance.
 For a noisy input image~$y \in \R^m$, let $\mathcal{J}$ be a partition of the dimensions $\{1,\dots,m\}$.
 For a subset of the dimensions~$J \in \mathcal{J}$, $x_J$ denotes $x$ restricted to the dimensions $J$.
@@ -121,14 +126,14 @@ The training objective from Equation~(\ref{eq:N2C}) than becomes
 \begin{equation}
     \argmin_\theta \sum_{i=1}^{n} \norm[\Big]{f_\theta(y^{(i)}_{J^c})_J - y^{(i)}_J}_2^2.
 \end{equation}
-As in N2V, $x_{J^c}$ is obtained through a masking strategy; the main difference lies in the way the masked pixels are replaced.
+As in N2V, $x_{J^c}$ is obtained using a masking strategy; the main difference lies in how the masked pixels are replaced.
 While N2S directly uses random values, N2V chooses the replacement pixels randomly from local neighbors.
 
 In Noise2Same~\cite{Noise2Same}, the authors demonstrate that, in practice, both N2V and N2S are not strictly $\mathcal{J}$-invariant and thus conclude that strict $\mathcal{J}$-invariance is not necessary for achieving good denoising performance.
-Therefore, they propose to do without explicit manipulation of the receptive field and instead add a regularization term that encourages the network to learn an approximately $\mathcal{J}$-invariant mapping by itself.
+Therefore, they propose omitting explicit manipulation of the receptive field and instead adding a regularization term that encourages the network to learn an approximately $\mathcal{J}$-invariant mapping on its own.
 Laine~et al.~\cite{BSN} choose a different approach; instead of relying on masking strategies, they directly manipulate the receptive field by adapting the network architecture itself.
 
-In addition to the blind-spot-based  methods discussed so far, which are typically trained on datasets of noisy images, there also exist methods that operate in a zero-shot setting.
-Self2Self~\cite{S2S} is one such method, which leverages dropout-based self-consistency for denoising.
+In addition to the blind-spot-based methods discussed so far, which are typically trained on datasets of noisy images, there are also methods that operate in a zero-shot setting.
+Self2Self~\cite{S2S} is one such method, leveraging dropout-based self-consistency for denoising.
 During training, the network is applied to a single noisy image, and dropout is used to randomly disable certain parts of the network, forcing it to rely on other parts to predict the noisy pixels.
 The network then learns to produce consistent outputs across different dropout-induced versions of the image, allowing it to suppress noise while maintaining the underlying structure.

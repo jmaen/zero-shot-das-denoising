@@ -1,8 +1,6 @@
 \chapter{Implementation Details}
 
-Building on the methods described in the previous chapter, this chapter focuses on the practical aspects of our work.
-Specifically, it covers the architecture design, evaluation metrics, datasets, and preprocessing steps used in our experiments.
-
+Building on the methods described in the previous chapter, this chapter focuses on the practical aspects of our work, including architecture design, evaluation metrics, datasets, and preprocessing steps used in our experiments.
 \section{Architecture}\label{sec:architecture}
 
 \begin{wrapfigure}{r}{0.48\textwidth}
@@ -19,10 +17,10 @@ All architectures in our experiments use a fully-convolutional encoder-decoder n
 The encoder progressively downsamples the input using strided convolutions, increasing the number of feature channels while reducing spatial resolution.
 The decoder then upsamples the feature representations back to the target resolution using bilinear upsampling followed by additional convolutions.
 Skip connections are employed between corresponding encoder and decoder layers, bypassing the bottleneck to preserve fine-grained details.
-This helps retain spatial information that would otherwise be lost due to downsampling, thereby improving reconstruction quality.
+This improves reconstruction quality as it helps retain spatial information which would otherwise be lost due to downsampling.
 We find that parameterizing these skip connections is crucial for achieving strong denoising performance.
-While the original DIP paper employs $1 \times 1$ convolutions in the skip connections, we also explore a variant that replaces these convolutions with ECA blocks.
-We find that both variants yield comparable performance in terms of PSNR and SSIM\@; however, ECA blocks often contribute to better preservation of fine details, as shown in Figure~\ref{fig:ECA}.
+While the original DIP paper employs $1 \times 1$ convolutions in the skip connections, we explore replacing these convolutions with ECA blocks.
+Both variants yield comparable performance in terms of PSNR and SSIM\@; however, ECA blocks often result in better preservation of fine details, as shown in Figure~\ref{fig:ECA}.
 
 As in the original DIP paper, Batch Normalization (BN) is applied throughout the network.
 Note that for the DIP setting, BN is actually equivalent to Instance Normalization, as the batch size is 1 and there is no difference between training and inference time.
@@ -55,18 +53,19 @@ Optimization is performed using the Adam optimizer~\cite{Adam} with a learning r
 \section{Metrics}
 
 To evaluate and compare the performance of different denoising methods, we rely on two widely used image quality metrics: Peak Signal-to-Noise Ratio (PSNR) and Structural Similarity Index Measure (SSIM).
+For DAS data without access to clean references, we also consider the concept of local waveform coherence.
 
 \subsection{Peak Signal-to-Noise Ratio}
 
 PSNR is a standard metric used to quantify the reconstruction quality of an image by measuring the ratio between the maximum possible pixel intensity and the mean squared error (MSE) between the original and denoised images, $x, \hat{x} \in \R^{W \times H}$.
 It is defined as:
 \begin{equation}
-    \text{PSNR}(x,\hat{x}) = 10 \cdot \log_{10} \left(\frac{x_{\text{max}}^2}{\text{MSE}(x,\hat{x})}\right),
+    \text{PSNR}(x,\hat{x}) = 10 \cdot \log_{10} \left(\frac{I_{\text{max}}^2}{\text{MSE}(x,\hat{x})}\right),
 \end{equation}
-where $x_{\text{max}}$ is the maximum possible pixel intensity.
-For a normalized image, $x_{\text{max}} = 1$, therefore we obtain the simplified definition
+where $I_{\text{max}}$ denotes the maximum possible pixel intensity.
+For a normalized image, $I_{\text{max}} = 1$, therefore we obtain the simplified definition
 \begin{equation}\label{eq:PSNR}
-    \text{PSNR}(x,\hat{x}) = 10 \cdot \log_{10} \left(\frac{1}{\text{MSE}}\right) = -10 \cdot \log_{10}(\text{MSE}(x,\hat{x})),
+    \text{PSNR}(x,\hat{x}) = 10 \cdot \log_{10} \left(\frac{1}{\text{MSE}(x,\hat{x})}\right) = -10 \cdot \log_{10}(\text{MSE}(x,\hat{x})),
 \end{equation}
 where the MSE is given by
 \begin{equation}\label{eq:MSE}
@@ -139,7 +138,7 @@ For denoising DAS data, we use data from two real-world experiments:
     \item \textbf{SISSLE}~\cite{SISSLE}: The South Island Seismology at the Speed of Light Experiment near Haast, New Zealand.
     \item \textbf{FORGE}~\cite{FORGE}: The Frontier Observatory for Research in Geothermal Energy in Utah.
 \end{itemize}
-Data sources and detailed information on the samples used in our experiments can be found in the supplementary material (see Section~\ref{sec:DAS-details}).
+Data sources and detailed information on the samples used in our experiments can be found in the supplementary material.
 
 \section{Preprocessing}
 

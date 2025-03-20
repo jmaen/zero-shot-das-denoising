@@ -42,8 +42,8 @@
         \toprule
         Dataset &URL \\
         \midrule
-        SISSLE &{\small \url{https://datacommons.anu.edu.au/DataCommons/rest/records/anudc:6317}} \\
-        FORGE &{\small \url{https://constantine.seis.utah.edu/datasets.html}}\\
+        SISSLE &{\url{https://datacommons.anu.edu.au/DataCommons/item/anudc:6317}} \\
+        FORGE &{\url{https://constantine.seis.utah.edu/datasets.html}}\\
     	\bottomrule
     \end{tabular}
     \caption{Sources for the DAS datasets used in our experiments.}\label{tab:das-sources}
@@ -70,16 +70,16 @@
 \section{Derivation of the Noisier2Noise Assumption}
 
 Let $x$ be a clean signal, and let $y = x + n$ be a noisy observation of this signal.
-Further, let $z = y + m = x + n + m$ be an even noisier observation of the clean signal, with $m$ representing independent noise of the same distribution as $n$, i.e.\ $n\overset{d}{=}m$, leading to
+Further, let $z = y + m = x + n + m$ be an even noisier observation of the clean signal, with $m$ representing independent noise of the same distribution as $n$, i.e., $n\overset{d}{=}m$, leading to
 \begin{equation}
-    \E{n|z} = \E{m|z} = \E{\frac{n+m}{2} \mathrel{\Big|} z}.
+    \E{n \mid z} = \E{m \mid z} = \E{\tfrac{n+m}{2} \mid z}.
 \end{equation}
 Using the linearity of expectation, we obtain:
 \begin{equation}
 \begin{split}
-    \E{y|z} &= \E{x+n|z}\\
-    &= \E{x|z} + \E{n|z}\\
-    &= \E{x\mid z} + \E{\frac{n+m}{2} \mathrel{\Big|} z}.
+    \E{y \mid z} &= \E{x+n \mid z}\\
+    &= \E{x \mid z} + \E{n \mid z}\\
+    &= \E{x\mid z} + \E{\tfrac{n+m}{2} \mid z}.
 \end{split}
 \end{equation}
-Therefore, our best estimate of $\E{y|z}$ is $x + \frac{n + m}{2}$.
+Therefore, our best estimate of $\E{y \mid z}$ is $x + \frac{n + m}{2}$.

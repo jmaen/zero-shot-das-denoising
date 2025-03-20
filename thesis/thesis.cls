@@ -45,11 +45,10 @@
 \NewDocumentCommand{\normal}{O{\mathbf{0}} O{\sigma^2\mathbf{I}}}{\mathcal{N}(#1, #2)}
 \newcommand{\fnormal}[3]{\mathcal{N}(#1;#2,#3)}
 
-\newcommand{\E}[2][ ]{\mathbb{E}_{#1} \left[#2\right]}
+\newcommand{\E}[2][ ]{\mathbb{E}_{#1} [#2]}
 \DeclareMathOperator{\Var}{Var}
 
-\DeclareMathOperator*{\argmax}{argmax}
-\DeclareMathOperator*{\argmin}{argmin}
+\DeclareMathOperator*{\argmin}{argmin\,}
 
 \DeclarePairedDelimiterX{\norm}[1]{\lVert}{\rVert}{#1}
 

@@ -12,16 +12,16 @@ This is commonly framed as an inverse problem (IP), formally described by
 \begin{equation}
     y = \mathcal{A}(x) + n,
 \end{equation}
-where $y$ is the noisy observation, $x$ is the underlying clean signal $\mathcal{A}$ refers to any forward operator and $n$ represents some form of noise, for example Gaussian noise~$n \sim \normal$.
+where $y$ is the noisy observation, $x$ is the underlying clean signal, $\mathcal{A}$ refers to any forward operator, and $n$ represents some form of noise, for example Gaussian noise~$n \sim \normal$.
 In denoising problems, $\mathcal{A}$ is simply the identity operator.
 Since both the noise and its distribution are often unknown, denoising is an inherently ill-posed problem, as multiple solutions can explain the same noisy data.
-Therefore, additional assumptions or constraints on the solution space are necessary, a process typically referred to as regularization.
+Therefore, additional assumptions or constraints on the solution space are necessary, a concept commonly referred to as regularization.
 This can involve the use of a \textit{prior}, which encodes our beliefs about the likely properties of the clean signal.
 The choice of regularizer or prior depends on the specific problem setting and the type of data involved.
 
 \section{Distributed Acoustic Sensing}\label{sec:DAS}
 
-Distributed acoustic sensing (DAS), also known as distributed vibration sensing (DVS)~\cite{DAS}, is an innovative technology for high-resolution vibration measurements over large distances by utilizing fiber optic cables as sensor arrays.
+Distributed acoustic sensing (DAS), also known as distributed vibration sensing (DVS)~\cite{DAS}, is an innovative technology for high-resolution vibration measurements over long distances, utilizing fiber optic cables as sensor arrays.
 When a short laser pulse is sent through the fiber by a DAS interrogator unit, a fraction of the light is scattered back due to small variations or imperfections in the fiber.
 This phenomenon is referred to as Rayleigh scattering.
 \begin{wrapfigure}{r}{0.48\textwidth}
@@ -64,10 +64,10 @@ This concept of virtual sensors leads to high cost-effectiveness and, paired wit
 \end{figure}
 Despite these advantages, DAS systems often suffer from much lower signal quality than conventional seismographs, as they are more sensitive to various sources of noise.
 These can be divided into environmental noise and optical noise.
-Environmental noise includes natural phenomena such as winds or ocean waves, but also vibrations caused by vehicular and pedestrian traffic.
+Environmental noise includes natural phenomena such as winds or ocean waves, as well as vibrations caused by vehicular and pedestrian traffic.
 Optical noise originates from various interactions between the light and the fiber.
 It includes high-amplitude erratic noise and common mode noise~\cite{IDF}.
-The actual noise characteristics of DAS data not only depend on the environment, but also the measurement parameters such as channel spacing and sample rate.
+The actual noise characteristics of DAS data depend not only on the environment, but also on the measurement parameters such as channel spacing and sample rate.
 Typically, DAS data is visualized as a time-space image, as shown in Figure~\ref{fig:das-noise} for data from the SISSLE experiment near Haast, New Zealand~\cite{SISSLE} and the FORGE site in Utah~\cite{FORGE}.
 
 \section{Deep Learning}
@@ -82,7 +82,7 @@ The output of a single layer is given by
 \begin{equation}
     y = \varphi(\mathbf{W}\mathbf{x} + \mathbf{b}),
 \end{equation}
-where $\mathbf{x} \in \R^n$ is the input, $\mathbf{W} \in \R^{m \times n}$ is a weight matrix, $\mathbf{b} \in \R^m$ is a bias vector and $\varphi$ is an activation function applied element-wise, such as the Sigmoid or ReLU~\cite{ReLU}.
+where $\mathbf{x} \in \R^n$ is the input, $\mathbf{W} \in \R^{m \times n}$ is a weight matrix, $\mathbf{b} \in \R^m$ is a bias vector, and $\varphi$ is an activation function applied element-wise, such as the Sigmoid or ReLU~\cite{ReLU}.
 The outputs of each layer are then passed as inputs to the next layer, which is why this architecture is known as a fully-connected neural network. 
 Activation functions are necessary to prevent the network from reducing to a single linear transformation, ensuring that it can learn complex, non-linear representations.
 Therefore, a neural network can be described as a function~$f_{\theta}: \mathcal{X} \rightarrow \mathcal{Y}$ parameterized by $\theta$, where $\mathcal{X}$ and $\mathcal{Y}$ are input and output space, respectively, and $\theta$ represents the weights and biases across all layers~\cite{DeepLearning}.
@@ -90,7 +90,7 @@ In order to optimize these parameters, a loss function~$L: \mathcal{Y} \times \m
 Since $\hat{y}$ depends on $\theta$, the loss $L(\hat{y}, y)$ is implicitly a function of $\theta$.
 The gradient of the loss function with respect to the parameters, $\nabla_\theta L = \frac{\partial L}{\partial \theta}$, represents the direction of steepest ascent.
 Therefore, by moving the parameters in the opposite direction of the gradient, the loss function can be minimized.
-Typically, the gradient is not calculated for a single data point or for the whole dataset, but instead for a small subset of the dataset, balancing efficiency and stability during optimization.
+Typically, the gradient is not calculated for single data points or for the whole dataset, but instead for a small subset of the dataset, balancing efficiency and stability during optimization.
 This approach is referred to as (mini-batch) gradient descent.
 Backpropagation~\cite{Backpropagation} efficiently computes the gradient by propagating errors backward through the network using the chain rule, enabling fast optimization.
 
@@ -115,7 +115,7 @@ Second, convolutions are translationally equivariant, meaning that local pattern
 \subsection{Normalization}
 
 During the training process, the inputs of each layer change with each iteration as the parameters are optimized.
-That slows down the training because now each layer has to adapt to the new distribution of its inputs. This process is often referred to as internal covariate shift.
+This slows down training because each layer must adapt to the new distribution of its inputs, a process often referred to as internal covariate shift.
 To counteract this issue, Ioffe~et al.\ propose Batch Normalization (BN)~\cite{BatchNorm}.
 The idea behind BN is to normalize the inputs across the whole mini-batch and their spatial dimensions.
 The normalized input for a channel $c$ is given by
@@ -123,12 +123,12 @@ The normalized input for a channel $c$ is given by
     \hat{x}_c = \frac{x_c - \mu_c}{\sigma_c},
 \end{equation} 
 where $\mu_c$ and $\sigma_c$ are the per-channel mean and standard deviation of the mini-batch, respectively.  
-In order to allow the model to learn the identity if that were the optimal transformation, two additional learnable parameters, $\gamma$ and $\beta$, are introduced. The output of the BN layer is then defined as
+In order to allow the model to learn the identity --- if that were the optimal transformation --- two additional learnable parameters, $\gamma$ and $\beta$, are introduced. The output of the BN layer is then defined as
 \begin{equation}
     y_c = \gamma_c\hat{x}_c + \beta_c.
 \end{equation}
 Since there are no batch statistics available at inference time, BN keeps track of the running mean and variance during training and uses these values for normalization.
-While BN is widely used, there exist various similar normalization techniques~\cite{LayerNorm, InstanceNorm, GroupNorm} mainly differing in the dimensions across which they are applied.
+While BN is widely used, several similar normalization techniques exist~\cite{LayerNorm, InstanceNorm, GroupNorm}, mainly differing in the dimensions across which they are applied.
 A selection of them is visualized in Figure~\ref{fig:normalization}.
 
 \begin{figure}
@@ -215,7 +215,7 @@ This works by dynamically reweighting the features based on their importance~\ci
 While attention is often associated with natural language processing (NLP), especially since the introduction of the Transformer architecture~\cite{Transformer} where it is the underlying key principle, it also has applications beyond NLP.\@
 In computer vision, for example, it can help CNNs by reweighting feature channels or highlighting important spatial regions.
 One such method is Efficient Channel Attention (ECA), proposed by Wang et al.~\cite{ECA}, which uses global average pooling followed by a lightweight 1D-convolution to dynamically recalibrate feature importance.
-For an output~$\mathbf{X} \in \R^{C \times W \times H}$ of a convolutional layer, where $W$, $H$ and $C$ denote width, height and channel dimension, respectively, the weight of a feature channel $c$ is given by
+For an output~$\mathbf{X} \in \R^{C \times W \times H}$ of a convolutional layer, where $C$, $W$, and $H$ denote channel, width, and height dimension, respectively, the weight of a feature channel $c$ is given by
 \begin{equation}
     \mathbf{w}_c = \sigma(g(\mathbf{X}) \ast \mathbf{K})_c,
 \end{equation}
