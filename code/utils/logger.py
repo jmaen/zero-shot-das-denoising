@@ -190,7 +190,7 @@ class Logger():
         for tensor in tensors:
             tensor = tensor.squeeze()
             if seismic:
-                vmin, vmax = -5, 5
+                vmin, vmax = -2, 2
                 tensor = (tensor - vmin) / (vmax - vmin)
                 tensor = tensor.clamp(vmin, vmax)
             else:

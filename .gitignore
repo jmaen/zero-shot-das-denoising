@@ -156,19 +156,23 @@ cython_debug/
 
 .vscode
 .misc
+TODO.md
 
 experiments/
 output/
 wandb/
-test.ipynb
+notebooks/
+results/
 
 # data
 CelebA/
 LibriSpeech/
-FORGE/
-FORGE1/
-SISSLE/
+FORGE-all/
+SISSLE-all/
 DAS-Examples/
+synth/
+eq-36.npy
 
 # latex
 build/
+abstract/

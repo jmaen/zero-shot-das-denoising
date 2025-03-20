@@ -43,6 +43,11 @@ def load_celeba(num_samples=1):
 
 
 def save_image(img, path):
+    if img.min() < 0 or img.max() > 1:
+        # img = (img - img.min()) / (img.max() - img.min())
+        img = img / 2 + 0.5
+        img = img.clamp(0, 1)
+
     utils.save_image(img, path)
 
 

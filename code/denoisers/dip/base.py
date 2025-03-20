@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from utils import Logger
 from ..denoiser import Denoiser
+import matplotlib.pyplot as plt
 
 
 class LoggingOptions(TypedDict):
@@ -34,7 +35,7 @@ class Base(Denoiser):
     def name(self):
         return f"{str(self)} | {str(self.loss)} | {str(self.net)}"
 
-    def denoise(self, y: torch.Tensor, x: torch.Tensor = None, logging_options: LoggingOptions = None):
+    def denoise(self, y: torch.Tensor, x: torch.Tensor = None, logging_options: LoggingOptions = None, init_state: Dict[str, Any] = None):
         # logging
         if logging_options is None:
             logging_options = {
@@ -81,6 +82,8 @@ class Base(Denoiser):
             "metrics": {},
             "summary": {},
         }
+        if init_state is not None:
+            state.update(init_state)
 
         self.on_train_start(state)
 

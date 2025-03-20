@@ -6,19 +6,19 @@ from .base import Base
 
 
 class DIP(Base):
-    def __init__(self, net, loss, early_stopping=False, lr=0.01, max_epochs=2000, reference=None, **kwargs):
+    def __init__(self, net, loss, early_stopping=False, lr=0.01, max_epochs=2000, use_ref=False, **kwargs):
         super().__init__(net, loss, early_stopping)
 
         self.lr = lr
         self.max_epochs = max_epochs
-        self.reference = reference
+        self.use_ref = use_ref
 
     def __str__(self):
         return f"DIP{" - ES" if self.early_stopping else ""}"
 
     def optimize(self, y, state):
-        if self.reference is not None:
-            z = self.reference.clone().detach()
+        if self.use_ref and "reference" in state and state["reference"] is not None:
+            z = state["reference"].clone().detach()
 
             W, H = z.shape[-2:]
             pad_w = y.shape[-2] - W

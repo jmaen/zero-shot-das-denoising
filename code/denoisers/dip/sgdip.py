@@ -6,7 +6,7 @@ from .base import Base
 
 
 class SGDIP(Base):
-    def __init__(self, net, loss, early_stopping=False, lr=0.01, max_epochs=2000, k=3, ratio=0.5, reference=None, **kwargs):
+    def __init__(self, net, loss, early_stopping=False, lr=0.01, max_epochs=2000, k=3, ratio=0.5, use_ref=False, **kwargs):
         super().__init__(net, loss, early_stopping, **kwargs)
 
         self.lr = lr
@@ -14,14 +14,14 @@ class SGDIP(Base):
 
         self.k = k
         self.ratio = ratio
-        self.reference = reference
+        self.use_ref = use_ref
 
     def __str__(self):
-        return f"SGDIP{" - ES" if self.early_stopping else ""} (k={self.k}, r={self.ratio})"
+        return f"SGDIP{" - ES" if self.early_stopping else ""} (k={self.k}, r={self.ratio}, ref={self.use_ref})"
     
     def optimize(self, y, state):
-        if self.reference is not None:
-            z = self.reference.clone().detach()
+        if self.use_ref and "reference" in state and state["reference"] is not None:
+            z = state["reference"].clone().detach()
 
             W, H = z.shape[-2:]
             pad_w = y.shape[-2] - W
