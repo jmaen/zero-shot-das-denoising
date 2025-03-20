@@ -1,5 +1,7 @@
 \chapter{Supplementary Material}
 
+\renewcommand\addcontentsline[3]{}  % don't show appendix section in contents
+
 \section{Acronyms}
 
 \begin{table}[h!]
@@ -32,21 +34,52 @@
     \caption{List of common acronyms.}
 \end{table}
 
-\section{DAS Sample Details}
+\section{DAS Experiment Details}\label{sec:DAS-details}
 
-% TODO add SISSLE data
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{ l l }
+        \toprule
+        Dataset &URL \\
+        \midrule
+        SISSLE &{\small \url{https://datacommons.anu.edu.au/DataCommons/rest/records/anudc:6317}} \\
+        FORGE &{\small \url{https://constantine.seis.utah.edu/datasets.html}}\\
+    	\bottomrule
+    \end{tabular}
+    \caption{Sources for the DAS datasets used in our experiments.}\label{tab:das-sources}
+\end{table}
+
 \begin{table}[h!]
     \centering
     \begin{tabular}{ l l c c c c }
         \toprule
-        Data & File name & Channels & \shortstack{Time\\span (s)} & \shortstack{Channel\\spacing (m)} & \shortstack{Sample\\rate (Hz)} \\
+        Sample & File name & Channels & \shortstack{Time\\span (s)} & \shortstack{Channel\\spacing (m)} & \shortstack{Sample\\rate (Hz)} \\
         \midrule
-        \textit{FORGE 1} & {\scriptsize \shortstack{FORGE\_78-32\_iDASv3-P11\_\\UTC190428070308.sgy}} & 200--1160 & 9.75--10.75 & 1 & 1000 \\
+        \textit{FORGE 1} & {\scriptsize \shortstack[l]{FORGE\_78-32\_iDASv3-P11\_\\UTC190428070308.sgy}} & 200--1160 & 9.75--10.75 & 1 & 1000 \\
         \\[-1em]
-        \textit{FORGE 2} & {\scriptsize \shortstack{FORGE\_78-32\_iDASv3-P11\_\\UTC190423213209.sgy}} & 200--1160 & 0.75--1.75 & 1 & 1000 \\
+        \textit{FORGE 2} & {\scriptsize \shortstack[l]{FORGE\_78-32\_iDASv3-P11\_\\UTC190423213209.sgy}} & 200--1160 & 0.75--1.75 & 1 & 1000 \\
         \\[-1em]
-        \textit{FORGE 3} & {\scriptsize \shortstack{FORGE\_78-32\_iDASv3-P11\_\\UTC190419001218.sgy}} & 50--1010 & 3.5--4.5 & 1 & 1000 \\
+        \textit{FORGE 3} & {\scriptsize \shortstack[l]{FORGE\_78-32\_iDASv3-P11\_\\UTC190419001218.sgy}} & 50--1010 & 3.5--4.5 & 1 & 1000 \\
+        \\[-1em]
+        \textit{SISSLE 1} & {\scriptsize \shortstack[l]{south30\_50Hz\_UTC\_\\20230412\_074907.359.h5}} & 400--912 & 42--52.24 & 4 & 50 \\
         \bottomrule
     \end{tabular}
     \caption{Detailed information on the DAS samples used in our experiments.}\label{tab:sample-details}
 \end{table}
+
+\section{Derivation of the Noisier2Noise Assumption}
+
+Let $x$ be a clean signal, and let $y = x + n$ be a noisy observation of this signal.
+Further, let $z = y + m = x + n + m$ be an even noisier observation of the clean signal, with $m$ representing independent noise of the same distribution as $n$, i.e.\ $n\overset{d}{=}m$, leading to
+\begin{equation}
+    \E{n|z} = \E{m|z} = \E{\frac{n+m}{2} \mathrel{\Big|} z}.
+\end{equation}
+Using the linearity of expectation, we obtain:
+\begin{equation}
+\begin{split}
+    \E{y|z} &= \E{x+n|z}\\
+    &= \E{x|z} + \E{n|z}\\
+    &= \E{x\mid z} + \E{\frac{n+m}{2} \mathrel{\Big|} z}.
+\end{split}
+\end{equation}
+Therefore, our best estimate of $\E{y|z}$ is $x + \frac{n + m}{2}$.

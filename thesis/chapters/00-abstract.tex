@@ -1,3 +1,9 @@
 \chapter*{Abstract}
 
-Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+Distributed Acoustic Sensing (DAS) is an innovative technology that transforms standard fiber-optic cables into dense seismic sensor arrays, enabling large-scale, real-time monitoring across extensive distances.
+While DAS holds significant promise for applications in geophysics, infrastructure monitoring, and security, its data is often contaminated by noise from environmental disturbances and instrumental limitations.
+Effective denoising is therefore essential for practical use.
+This thesis investigates the applicability of methods based on Deep Image Prior (DIP) for zero-shot denoising of DAS data --- a novel approach that does not require pre-collected training datasets, making it particularly suitable for scenarios where clean reference signals are scarce.
+
+We explore a range of DIP-based methods and evaluate their effectiveness on DAS data. As part of this investigation, we introduce SGR-DIP as an extension to SG-DIP and demonstrate its effectiveness on both regular image data and DAS data. Our findings highlight the challenges of applying DIP-based approaches to real-world DAS setups due to varying signal structures and noise characteristics but also demonstrate their potential as viable solutions in scenarios lacking clean reference signals. 
+Our implementation is available at \url{https://github.com/jmaen/zero-shot-das-denoising}.

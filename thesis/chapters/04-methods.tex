@@ -122,7 +122,7 @@ The authors observe that the MSE $\norm{x_t-x}_F^2$ initially drops as the netwo
 The challenge remains to detect the minimum of said curve without access to $x$.
 To achieve this, they consider the running variance over a window of $W$ iterations, given by
 \begin{equation}\label{eq:Var}
-    \Var(t) = \frac{1}{W} \sum_{w=0}^{W-1} \norm{x_{t+w}-\frac{1}{W} \sum_{i=0}^{W-1} x_{t+i}}_F^2.
+    \Var(t) = \frac{1}{W} \sum_{w=0}^{W-1} \norm[\bigg]{x_{t+w}-\frac{1}{W} \sum_{i=0}^{W-1} x_{t+i}}_F^2.
 \end{equation}
 Intuitively, when $t$ is near the optimal stopping point, $x_t$ should be close to $x$, leading to $\frac{1}{W} \sum_{w=0}^{W} x_t \approx x$.
 Plugging this back into Equation~(\ref{eq:Var}), we see that when $t$ is near the optimum, $\Var(t)$ approximates the average MSE across the window.
@@ -205,22 +205,7 @@ This objective naturally induces a structured learning process:
 Ideally, the network first learns to capture the general structure of the image.
 Due to the optimization of $z$ and the regularization term, both the input and output should provide a reasonable estimate of the clean image.
 At this stage, vanilla DIP would typically begin to overfit.
-However, in SG-DIP, the regularization term constrains the output from deviating too much from the input, making it costly for the network to fit the noise --- since doing so would introduce global alterations to the output.
-Instead, the network is encouraged to refine the output while staying close to the input, effectively suppressing noise without overfitting.
-
-To explicitly reinforce this behavior, we propose gradually increasing $\lambda$ throughout training according to a schedule $\lambda = s(t)$, where $t$ denotes the current iteration.
-This approach intuitively divides the optimization process into two phases:
-Initially, both terms in the objective are balanced, allowing the network to extract the general structure of the image. As training progresses and $\lambda$ increases, the regularization term dominates, restricting the model to only minor refinements.
-Therefore, we term this modification Self-Guided Refinement Deep Image Prior (SGR-DIP).
-The overall training objective is illustrated in Figure~\ref{fig:SGR-DIP}.
-
-We observe that the addition of the schedule improves denoising performance; however, we note that the effectiveness of this approach is highly dependent on the specific configuration of the schedule implemented, especially on DAS data.
-If the regularization term remains too small for an extended period, there is still a risk of overfitting.
-Conversely, if it increases too prematurely, it may hinder further learning before the image structure has been adequately captured.
-To address this issue, we also consider a variant in which we replace the random initialization of $z$ with the noisy image $y$.
-Note that the two loss terms are still different, as $z$ is optimized throughout training, while $y$ stays constant.
-This modification facilitates the network's ability to learn the primary structure of the image. 
-However, we observe that it necessitates an increase in the variance of the noise added to $z$ to prevent the network from merely learning the identity function.
+However, in SG-DIP, the regularization term constrains the output from deviating too much from the input, making it costly for the network to fit the noise.  % XXX layout --- since doing so would introduce global alterations to the output.
 
 \begin{figure}
     \centering
@@ -253,4 +238,30 @@ However, we observe that it necessitates an increase in the variance of the nois
     }\label{fig:SGR-DIP}
 \end{figure}
 
-% XXX pseudocode
+% TODO pseudocode
+\begin{wrapfigure}{r}{0.48\textwidth}
+    \begin{algorithm}[H]
+        \caption{SGR-DIP}
+        \KwIn{Noisy image $y$}
+        \KwOut{Reconstructed image $\hat{x}$}
+        \For{t=1 \text{ to } T}{
+            Compute the current output of the network \( \hat{x} = f_{\theta}(z) \)\;
+        }
+        \Return the reconstructed image \( \hat{x} \)\;
+    \end{algorithm}
+\end{wrapfigure}
+
+Instead, the network is encouraged to refine the output while staying close to the input, effectively suppressing noise without overfitting.
+To explicitly reinforce this behavior, we propose gradually increasing $\lambda$ throughout training according to a schedule $\lambda = s(t)$, where $t$ denotes the current iteration.
+This approach intuitively divides the optimization process into two phases:
+Initially, both terms in the objective are balanced, allowing the network to extract the general structure of the image. As training progresses and $\lambda$ increases, the regularization term dominates, restricting the model to only minor refinements.
+Therefore, we term this modification Self-Guided Refinement Deep Image Prior (SGR-DIP).
+The overall training objective is illustrated in Figure~\ref{fig:SGR-DIP}.
+
+We observe that the addition of the schedule improves denoising performance; however, we note that the effectiveness of this approach is highly dependent on the specific configuration of the schedule implemented, especially on DAS data.
+If the regularization term remains too small for an extended period, there is still a risk of overfitting.
+Conversely, if it increases too prematurely, it may hinder further learning before the image structure has been adequately captured.
+To address this issue, we also consider a variant in which we replace the random initialization of $z$ with the noisy image $y$.
+Note that the two loss terms are still different, as $z$ is optimized throughout training, while $y$ stays constant.
+This modification facilitates the network's ability to learn the primary structure of the image. 
+However, we observe that it necessitates an increase in the variance of the noise added to $z$ to prevent the network from merely learning the identity function.

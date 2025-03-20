@@ -22,6 +22,7 @@
 \usepackage{amsmath,amssymb}
 \usepackage{mathtools}
 \usepackage{xparse}
+\usepackage[ruled]{algorithm2e}
 
 % Graphics
 \usepackage{tikz}
@@ -44,15 +45,13 @@
 \NewDocumentCommand{\normal}{O{\mathbf{0}} O{\sigma^2\mathbf{I}}}{\mathcal{N}(#1, #2)}
 \newcommand{\fnormal}[3]{\mathcal{N}(#1;#2,#3)}
 
-\newcommand{\E}[2][ ]{\mathbb{E}_{#1} [#2]}
+\newcommand{\E}[2][ ]{\mathbb{E}_{#1} \left[#2\right]}
 \DeclareMathOperator{\Var}{Var}
 
 \DeclareMathOperator*{\argmax}{argmax}
 \DeclareMathOperator*{\argmin}{argmin}
 
-% TODO switch to manual sizing
-% \DeclarePairedDelimiterX{\norm}[1]{\lVert}{\rVert}{#1}
-\newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\DeclarePairedDelimiterX{\norm}[1]{\lVert}{\rVert}{#1}
 
 % Avoid widows and orphans
 \clubpenalty = 10000

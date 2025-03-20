@@ -1,14 +1,12 @@
 \chapter{Introduction}
 
-% TODO add sources (see DAS-N2S, DAS-CN2S)
 Distributed Acoustic Sensing (DAS) is a novel technology that transforms standard fiber-optic cables into dense arrays of seismic sensors, enabling continuous and large-scale monitoring over long distances.
-Its ability to provide real-time, high-resolution measurements without requiring dedicated sensors makes it particularly promising for applications in geophysics, infrastructure monitoring, and security.
-However, DAS data is often contaminated with noise from environmental disturbances and instrumental limitations, making effective denoising crucial for practical use.
+Its ability to provide real-time, high-resolution measurements without requiring dedicated sensors makes it particularly promising for applications in geophysics, infrastructure monitoring, and security~\cite{SelfMixed,DAS-N2N}.
+However, DAS data is often contaminated with noise from environmental disturbances and instrumental limitations~\cite{IDF}, making effective denoising crucial for practical use.
 
 Denoising methods can be broadly divided into classical signal-processing techniques and deep-learning-based approaches. Classical methods, such as filtering, rely on predefined assumptions about noise characteristics but often struggle with complex or non-stationary noise.
-Advances in deep learning (DL) enabled advanced denoising techniques, including supervised and unsupervised approaches.
-Supervised models require large labeled datasets of noisy and clean signal pairs, while unsupervised methods leverage statistical properties of the data itself to remove the need for clean samples.
-Another promising approach is Deep Image Prior (DIP), which operates in a zero-shot setting --- meaning it does not rely on any prior training data --- by optimizing a neural network on a single noisy instance, using the inherent structural bias of convolutional networks to favor signal over noise.
+Deep learning (DL) enabled advanced denoising techniques, including supervised methods~\cite{DnCNN,N2N}, which require large labeled datasets of noisy and clean signal pairs, and unsupervised approaches~\cite{Noisier2Noise,N2V,N2S} that leverage statistical properties of the data itself to remove the need for clean samples.
+Another promising approach is Deep Image Prior (DIP)~\cite{DIP}, which operates in a zero-shot setting --- meaning it does not rely on any prior training data --- by optimizing a neural network on a single noisy instance, using the inherent structural bias of convolutional networks to favor signal over noise.
 
 This thesis explores the use of DIP-based methods for zero-shot denoising of DAS data.
 Unlike other DL-based approaches, these methods do not require pre-collected training datasets, making them appealing for DAS applications where clean reference data is scarce.

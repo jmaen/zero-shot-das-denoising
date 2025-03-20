@@ -10,7 +10,7 @@ Traditional supervised methods typically employ a neural network~$f_\theta$ to l
 Therefore, a dataset of paired clean and noisy images, denoted $\{(y^{(i)},x^{(i)})\}_{i=1}^n$, is essential for the training process.
 The corresponding optimization problem is given by
 \begin{equation}\label{eq:N2C}
-    \argmin_\theta \sum_{i=1}^{n} \norm{f_\theta(y^{(i)}) - x^{(i)}}_2^2.
+    \argmin_\theta \sum_{i=1}^{n} \norm[\Big]{f_\theta(y^{(i)}) - x^{(i)}}_2^2.
 \end{equation}
 Zhang~et al.\ propose the denoising convolutional neural network (DnCNN)~\cite{DnCNN} which improves denoising performance by making use of residual learning, i.e., instead of directly predicting the clean image, it is trained to predict the noise in the noisy image.
 The denoised image is then obtained as $\hat{x} = y - f_{\theta^*}(y)$ for optimized parameters~$\theta^*$.
@@ -20,7 +20,7 @@ To address this issue, Lehtinen~et al.\ propose Noise2Noise (N2N)~\cite{N2N}, wh
 Instead, it utilizes two independent noisy observations $y_1 = x + n_1$ and $y_2 = x + n_2$ of the same underlying clean signal $x$ as input and target, respectively.
 The training objective then becomes
 \begin{equation}\label{eq:N2N}
-    \argmin_\theta \sum_{i=1}^{n} \norm{f_\theta(y_1^{(i)}) - y_2^{(i)}}_2^2.
+    \argmin_\theta \sum_{i=1}^{n} \norm[\Big]{f_\theta(y_1^{(i)}) - y_2^{(i)}}_2^2.
 \end{equation}
 This method relies on the assumption that the noise is zero-mean, i.e., $\E{n} = 0$, which, due to linearity of expectation, implies that $\E{y} = x$.
 Since the mean squared error (MSE) is a mean-seeking loss function, the network then learns to predict $x$ implicitly.
@@ -40,7 +40,7 @@ Noisier2Noise~\cite{Noisier2Noise} builds upon N2N, but unlike N2N, it does not 
 Instead, it constructs these training pairs from individual noisy images only.
 Given a noisy input $y$, it generates an even noisier image $z = y + m = x + n + m$, with additional independent noise $m$ following the same distribution as $n$.
 Once again, it is optimized through Equation~(\ref{eq:N2N}), using $z$ as the input and $y$ as the target.
-The authors argue that $\E{y|z} = x + \frac{n + m}{2}$, since $\E{n} = \E{m}$.  % TODO proof in appendix
+The authors argue that $\E{y|z} \approx x + \frac{n + m}{2}$, since $\E{n} = \E{m}$, as detailed in the supplementary material.
 Therefore, by the same reasoning as in N2N, given a sufficient amount of noisy images, the network should learn to predict the mean of $x$ and $z$, which can then be used to obtain the denoised estimate as $\hat{x} = 2f_{\theta^*}(z) - z$.
 While this method removes the need for a paired dataset, it requires knowledge of the noise distribution in order to sample the additional noise, which often is not available in an unsupervised setting.
 
@@ -119,7 +119,7 @@ A function $f: \R^m \rightarrow \R^m$ is said to be $\mathcal{J}$-invariant if, 
 where $J^c$ refers to the complement of $J$.
 The training objective from Equation~(\ref{eq:N2C}) than becomes
 \begin{equation}
-    \argmin_\theta \sum_{i=1}^{n} \norm{f_\theta(y^{(i)}_{J^c})_J - y^{(i)}_J}_2^2.
+    \argmin_\theta \sum_{i=1}^{n} \norm[\Big]{f_\theta(y^{(i)}_{J^c})_J - y^{(i)}_J}_2^2.
 \end{equation}
 As in N2V, $x_{J^c}$ is obtained through a masking strategy; the main difference lies in the way the masked pixels are replaced.
 While N2S directly uses random values, N2V chooses the replacement pixels randomly from local neighbors.
