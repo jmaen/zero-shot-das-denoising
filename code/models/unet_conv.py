@@ -73,7 +73,7 @@ class Skip(nn.Module):
         
 
 class UNetConv(nn.Module):
-    def __init__(self, in_ch=3, out_ch=3, hidden_ch=64, skip_ch=4, n_layers=4, label=""):
+    def __init__(self, in_ch=3, out_ch=3, hidden_ch=8, skip_ch=4, n_layers=4, label=""):
         super().__init__()
 
         self.label = label

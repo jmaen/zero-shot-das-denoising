@@ -72,11 +72,11 @@ class ECA(nn.Module):
         y = self.global_avg_pool(x).view(b, 1, c)  # (B, 1, C)
         y = self.conv1d(y).view(b, c, 1, 1)  # (B, C, 1, 1)
         y = self.sigmoid(y)
-        return x * y.expand_as(x)  # Scale input
+        return x * y.expand_as(x)
         
 
 class UNetECA(nn.Module):
-    def __init__(self, in_ch=3, out_ch=3, hidden_ch=64, skip_ch=4, n_layers=4, label=""):
+    def __init__(self, in_ch=3, out_ch=3, hidden_ch=8, n_layers=4, label=""):
         super().__init__()
 
         self.label = label

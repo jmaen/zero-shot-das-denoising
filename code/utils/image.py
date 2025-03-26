@@ -22,7 +22,7 @@ def load_image(path, size=256):
 
 def load_images(dir, size=256):
     images = []
-    for file in os.listdir(dir):
+    for file in sorted(os.listdir(dir)):
         image = load_image(os.path.join(dir, file), size)
         images.append(image)
 

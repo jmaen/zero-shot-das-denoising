@@ -27,7 +27,7 @@ class Base(Denoiser):
 
         self.early_stopping = early_stopping
         if self.early_stopping:
-            self.patience = 300
+            self.patience = 500
             self.window_size = 100
 
         self.logger = Logger()
@@ -40,7 +40,11 @@ class Base(Denoiser):
         if logging_options is None:
             logging_options = {
                 "mode": "local",
-                "config": {},
+                "config": {
+                    "data_id": 0,
+                    "denoiser_id": 0,
+                    "out_dir": "",
+                },
                 "metrics": {},
                 "log_output": False,
             }
