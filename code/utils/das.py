@@ -12,6 +12,14 @@ def bandpass(x, low, high, fs):
     return x
 
 
+def lowpass(x, high, fs):
+    band = 2 * high/fs
+    b, a = signal.butter(3, band, btype="low")
+    x = signal.filtfilt(b, a, x, axis=-1)
+
+    return x
+
+
 def substract_median(x, channel_axis=0):
     median = np.median(x, axis=channel_axis, keepdims=True)
     return x - median
